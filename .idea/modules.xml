@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/DES2000.iml" filepath="$PROJECT_DIR$/DES2000.iml" />
+      <module fileurl="file://$PROJECT_DIR$/flink-common/flink-common.iml" filepath="$PROJECT_DIR$/flink-common/flink-common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/flink-kafka-event-to-cleandata/flink-kafka-event-to-cleandata.iml" filepath="$PROJECT_DIR$/flink-kafka-event-to-cleandata/flink-kafka-event-to-cleandata.iml" />
+      <module fileurl="file://$PROJECT_DIR$/flink-kafka-event-to-redis/flink-kafka-event-to-redis.iml" filepath="$PROJECT_DIR$/flink-kafka-event-to-redis/flink-kafka-event-to-redis.iml" />
+    </modules>
+  </component>
+</project>
