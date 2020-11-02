@@ -1,4 +1,4 @@
-package cn.zup.iot.cleandata;
+package cn.zup.iot.basedata;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

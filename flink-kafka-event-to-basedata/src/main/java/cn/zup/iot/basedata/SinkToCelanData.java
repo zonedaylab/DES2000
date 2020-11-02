@@ -1,4 +1,4 @@
-package cn.zup.iot.cleandata;
+package cn.zup.iot.basedata;
 
 import cn.zup.iot.common.model.DataEvent;
 import org.apache.flink.configuration.Configuration;

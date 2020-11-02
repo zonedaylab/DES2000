@@ -29,7 +29,7 @@ public class FlinkKafkaToCleanData {
                 .map(string -> JSON.parseObject(string, DataEvent.class)); //Fastjson 解析字符串成 DataEvent 对象
 
         dataStreamSource.print();
-        dataStreamSource.addSink(new SinkToCelanData()); //数据 sink 到 mysql
+      //  dataStreamSource.addSink(new SinkToCelanData()); //数据 sink 到 mysql
 
 
 

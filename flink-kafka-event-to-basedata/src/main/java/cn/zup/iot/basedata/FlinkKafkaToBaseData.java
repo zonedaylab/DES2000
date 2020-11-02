@@ -1,5 +1,6 @@
-package cn.zup.iot.cleandata;
+package cn.zup.iot.basedata;
 
+import cn.zup.iot.cleandata.SinkToCelanData;
 import cn.zup.iot.common.constant.PropertiesConstants;
 import cn.zup.iot.common.model.DataEvent;
 import cn.zup.iot.common.utils.ExecutionEnvUtil;
@@ -15,7 +16,7 @@ import java.util.Properties;
 import static cn.zup.iot.common.utils.KafkaConfigUtil.buildKafkaProps;
 
 
-public class FlinkKafkaToCleanData {
+public class FlinkKafkaToBaseData {
     public static void main(String[] args) throws Exception {
         final ParameterTool parameterTool = ExecutionEnvUtil.createParameterTool(args);
         StreamExecutionEnvironment env = ExecutionEnvUtil.prepare(parameterTool);

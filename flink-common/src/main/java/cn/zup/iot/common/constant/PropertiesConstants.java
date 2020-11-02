@@ -1,6 +1,7 @@
 package cn.zup.iot.common.constant;
 
 
+import org.omg.CORBA.PUBLIC_MEMBER;
 
 public class PropertiesConstants {
     public static final String KAFKA_BROKERS = "kafka.brokers";
@@ -8,7 +9,7 @@ public class PropertiesConstants {
     public static final String KAFKA_ZOOKEEPER_CONNECT = "kafka.zookeeper.connect";
     public static final String DEFAULT_KAFKA_ZOOKEEPER_CONNECT = "localhost:2181";
     public static final String KAFKA_TOPIC_ID = "kafka.topic.id";
-    public static final String DEFAULT_KAFKA_TOPIC_ID = "event_test";
+    public static final String DEFAULT_KAFKA_TOPIC_ID = "event_edn";
     public static final String CONSUMER_FROM_TIME = "consumer.from.time";
     public static final String STREAM_PARALLELISM = "stream.parallelism";
     public static final String STREAM_SINK_PARALLELISM = "stream.sink.parallelism";
@@ -32,4 +33,8 @@ public class PropertiesConstants {
     public static final String MYSQL_PASSWORD = "mysql.password";
     public static final String MYSQL_PORT = "mysql.port";
     public static final String MYSQL_USERNAME = "mysql.username";
+    //redis
+    public static final String REDIS_HOST="127.0.0.1";
+    public static final int REDIS_PORT=6378;
+    public static final String REDIS_PASSWD="123456";
 }

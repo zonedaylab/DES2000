@@ -36,6 +36,7 @@ under the License.
 		<module>flink-kafka-event-to-timerdbsave</module>
 		<module>flink-kafka-event-to-timerdecision</module>
 		<module>flink-kafka-event-to-timerproducer</module>
+        <module>flink-kafka-event-toRedis</module>
     </modules>
 
 	<properties>
