@@ -11,6 +11,7 @@
         <option value="$PROJECT_DIR$/flink-kafka-event-to-timerdecision/pom.xml" />
         <option value="$PROJECT_DIR$/link-kafka-event-to-timerdbsave/pom.xml" />
         <option value="$PROJECT_DIR$/flink-kafka-event-to-timerdbsave/pom.xml" />
+        <option value="$PROJECT_DIR$/flink-kafka-event-to-basedate/pom.xml" />
       </list>
     </option>
   </component>

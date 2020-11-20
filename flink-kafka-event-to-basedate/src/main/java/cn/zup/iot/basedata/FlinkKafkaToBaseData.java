@@ -1,6 +1,5 @@
 package cn.zup.iot.basedata;
 
-import cn.zup.iot.cleandata.SinkToCelanData;
 import cn.zup.iot.common.constant.PropertiesConstants;
 import cn.zup.iot.common.model.DataEvent;
 import cn.zup.iot.common.utils.ExecutionEnvUtil;
@@ -30,7 +29,7 @@ public class FlinkKafkaToBaseData {
                 .map(string -> JSON.parseObject(string, DataEvent.class)); //Fastjson 解析字符串成 DataEvent 对象
 
         dataStreamSource.print();
-        dataStreamSource.addSink(new SinkToCelanData()); //数据 sink 到 mysql
+        dataStreamSource.addSink(new SinkToBaseData()); //数据 sink 到 mysql
 
 
 
