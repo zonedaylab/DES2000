@@ -16,7 +16,7 @@ import java.text.SimpleDateFormat;
  * blog: http://www.54tianzhisheng.cn/
  */
 public class SinkToCelanData extends RichSinkFunction<DataEvent> {
-    PreparedStatement ps;
+    private PreparedStatement ps;
     private Connection connection;
 
     /**
@@ -81,7 +81,7 @@ public class SinkToCelanData extends RichSinkFunction<DataEvent> {
         Connection con = null;
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            con = DriverManager.getConnection("jdbc:mysql://localhost:3306/test?useSSL=false&useUnicode=true&characterEncoding=UTF8&serverTimezone=GMT", "root", "iesapp");
+            con = DriverManager.getConnection("jdbc:mysql://localhost:3306/ls?useSSL=false&useUnicode=true&characterEncoding=UTF8&serverTimezone=GMT", "root", "iesapp");
         } catch (Exception e) {
             System.out.println("-----------mysql get connection has exception , msg = "+ e.getMessage());
         }

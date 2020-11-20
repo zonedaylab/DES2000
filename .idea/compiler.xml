@@ -7,25 +7,24 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="flink-kafka-event-to-timerdecision" />
         <module name="flink-kafka-event-to-timercalc" />
-        <module name="flink-kafka-event-toRedis" />
+        <module name="flink-kafka-event-to-cleandata" />
+        <module name="flink-kafka-event-to-timerdecision" />
+        <module name="demo11" />
         <module name="flink-kafka-event-to-timerdbsave" />
-        <module name="flink-kafka-event-to-cleandata (1)" />
+        <module name="flink-kafka-event-to-basedata" />
         <module name="flink-common" />
         <module name="flink-kafka-event-to-timerproducer" />
         <module name="flink-kafka-event-to-redis" />
-      </profile>
-      <profile name="Annotation profile for DES2000" enabled="true">
-        <sourceOutputDir name="../flink-kafka-event-to-basedata/target/generated-sources/annotations" />
-        <sourceTestOutputDir name="../flink-kafka-event-to-basedata/target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
-        <module name="flink-kafka-event-to-cleandata" />
+        <module name="flink-kafka-event-to-timerRedis" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="demo" target="1.8" />
+      <module name="demo11" target="1.8" />
       <module name="DES2000" target="1.8" />
       <module name="flink-common" target="1.8" />
+      <module name="flink-kafka-event-to-basedata" target="1.8" />
       <module name="flink-kafka-event-to-cleandata" target="1.8" />
       <module name="flink-kafka-event-to-cleandata (1)" target="1.8" />
       <module name="flink-kafka-event-to-redis" target="1.8" />
@@ -33,7 +32,8 @@
       <module name="flink-kafka-event-to-timerdbsave" target="1.8" />
       <module name="flink-kafka-event-to-timerdecision" target="1.8" />
       <module name="flink-kafka-event-to-timerproducer" target="1.8" />
-      <module name="flink-kafka-event-toRedis" target="1.8" />
+      <module name="flink-kafka-event-to-timerRedis" target="1.8" />
+      <module name="link-kafka-event-to-timerdbsave" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

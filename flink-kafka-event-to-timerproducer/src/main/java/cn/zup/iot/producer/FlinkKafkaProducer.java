@@ -57,6 +57,7 @@ public class FlinkKafkaProducer {
                                             .timerTime(LocalDateTime.now())
                                             .timerName("5分钟存盘")
                                             .build());
+                                    System.out.println(LocalDateTime.now());
                                 }
                                 if(second%(60*60)==0){
                                     sourceContext.collect(Timer.builder()

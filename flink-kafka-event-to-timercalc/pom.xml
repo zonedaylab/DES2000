@@ -30,7 +30,7 @@
         </dependency>
         <dependency>
             <groupId>cn.zup.iot</groupId>
-            <artifactId>flink-kafka-event-to-redis</artifactId>
+            <artifactId>flink-kafka-event-to-timerRedis</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>

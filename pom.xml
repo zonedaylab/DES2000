@@ -31,12 +31,11 @@ under the License.
 		<module>flink-common</module>
 		<module>flink-kafka-event-to-basedata</module>
 		<module>flink-kafka-event-to-cleandata</module>
-		<module>flink-kafka-event-to-redis</module>
+		<module>flink-kafka-event-to-timerRedis</module>
 		<module>flink-kafka-event-to-timercalc</module>
 		<module>flink-kafka-event-to-timerdbsave</module>
 		<module>flink-kafka-event-to-timerdecision</module>
 		<module>flink-kafka-event-to-timerproducer</module>
-        <module>flink-kafka-event-toRedis</module>
     </modules>
 
 	<properties>
