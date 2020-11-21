@@ -4,11 +4,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 @Component
+@Repository
 public class CommandLine implements CommandLineRunner {
 
-    @Autowired(required=false)
+    @Autowired
     FlinkKafkaTimerdecision flinkKafkaTimerdecision;
 
     @Override

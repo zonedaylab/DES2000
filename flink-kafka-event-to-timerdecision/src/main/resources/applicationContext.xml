@@ -16,10 +16,11 @@
 		 http://www.springframework.org/schema/mvc 
 		 http://www.springframework.org/schema/mvc/spring-mvc-4.2.xsd"
        	default-autowire="byName"  >
-       	
-	
+
+
 	<!-- 开启IOC注解扫描 -->
 	<context:component-scan base-package="cn.zup.iot.timerdecision" />
+
 	<context:property-placeholder location="classpath:application.yml"/>
 
 
@@ -30,7 +31,7 @@
 		<property name="driverClassName" value="${spring.ms.driverClassName}"></property>
 		<property name="url" value="${spring.ms.url}"></property>
         <property name="username" value="${spring.ms.username}"></property>
-		<property name="password" value="${spring.ms.password}"></property>
+		<property name="password" value="${spring.ms.passwd}"></property>
 		<property name="maxActive" value="${spring.ms.maxActive}"></property>
 		<property name="initialSize" value="${spring.ms.initialSize}"></property>
         <property name="minIdle" value="${spring.ms.minIdle}"></property>
@@ -41,7 +42,7 @@
 		<property name="driverClassName" value="${spring.pms.driverClassName}"></property>
 		<property name="url" value="${spring.pms.url}"></property>
 		<property name="username" value="${spring.pms.username}"></property>
-		<property name="password" value="${spring.pms.password}"></property>
+		<property name="password" value="${spring.pms.passwd}"></property>
 		<property name="maxActive" value="${spring.pms.maxActive}"></property>
 		<property name="initialSize" value="${spring.pms.initialSize}"></property>
 		<property name="minIdle" value="${spring.pms.minIdle}"></property>
@@ -76,7 +77,7 @@
 			<ref bean="jdbcTemplate_mc"/>
 		</property>
 	</bean>
-	<bean id="scadaWarnPushDao" class="cn.zup.iot.timerdecision.dao.ScadaWarnPushDao">
+	 <bean id="scadaWarnPushDao" class="cn.zup.iot.timerdecision.dao.ScadaWarnPushDao">
 		<property name="jdbcTemplateWarn">
 			<ref bean="bpmJdbcTemplate_mc"/>
 		</property>
@@ -91,7 +92,7 @@
 			<ref bean="bpmJdbcTemplate_mc"/>
 		</property>
 	</bean>
-	<bean id="diagnosisDao" class="cn.zup.iot.timerdecision.dao.InitTreeDao">
+	<bean id="initTreeDao" class="cn.zup.iot.timerdecision.dao.InitTreeDao">
 		<property name="jdbcTemplateInit">
 			<ref bean="bpmJdbcTemplate_mc"/>
 		</property>
@@ -101,7 +102,6 @@
 	<bean id="activityNodeService" class="cn.zup.iot.timerdecision.service.ActivityNodeService"></bean>
 	<bean id="decisionService" class="cn.zup.iot.timerdecision.service.DecisionService"></bean>
 	<bean id="StrategyWarnEngineService" class="cn.zup.iot.timerdecision.service.StrategyWarnEngineService"></bean>
-
 
 
 	

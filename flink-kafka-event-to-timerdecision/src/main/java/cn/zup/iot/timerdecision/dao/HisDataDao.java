@@ -45,6 +45,8 @@ import cn.zup.iot.timerdecision.service.settings.InfoType;
 import cn.zup.iot.timerdecision.service.settings.RegionType;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
+
 
 /*
  * 类的功能：历史数据查询
@@ -56,10 +58,10 @@ public class HisDataDao implements Serializable {
 	private JdbcTemplate jdbcTemplateHis;
 	private String iesbase = "";
 	
-	public JdbcTemplate getJdbcTemplateHis() {
-		return jdbcTemplateHis;
-	}
-
+//	public JdbcTemplate getJdbcTemplateHis() {
+//		return jdbcTemplateHis;
+//	}
+//
 	public void setJdbcTemplateHis(JdbcTemplate jdbcTemplateHis) {
 		this.jdbcTemplateHis = jdbcTemplateHis;
 	}
@@ -529,7 +531,7 @@ public class HisDataDao implements Serializable {
 			sql += yc.getLastValue();//  设置值
 			sql +=")";
 //			System.out.println(sql);
-			jdbcTemplateHis.update(sql); 
+			jdbcTemplateHis.update(sql);
 		} catch (Exception e) {
 			System.out.println("InsertYcDataInfo()异常:" + e.toString());
 		}
@@ -549,7 +551,7 @@ public class HisDataDao implements Serializable {
 			sql += "', calstat="+yc.getCalsStat()+" where bujianleixingId="+BJLX.changzhan.getValue()+" and bujiancanshuId=" +ChangZhanParam.stationrunstate.getValue() +" and bujianId = '"+yc.getBuJianId()+"'";
 			final String sqlStr = sql;
 //			System.out.println(sqlStr);
-			jdbcTemplateHis.update(sqlStr); 
+			jdbcTemplateHis.update(sqlStr);
 		} catch (Exception e) {
 			System.out.println("UpdateYcDataInfo()异常:" + e.toString());
 		}
@@ -745,7 +747,7 @@ public class HisDataDao implements Serializable {
 	    	
 //	    	System.out.println(sb.toString());
 	    	
-		    result = jdbcTemplateHis.query(sb.toString(), new ResultSetExtractor<List<HisDataTimeAndValue>>() { 
+		    result = jdbcTemplateHis.query(sb.toString(), new ResultSetExtractor<List<HisDataTimeAndValue>>() {
 		    public List<HisDataTimeAndValue> extractData(ResultSet rs)  throws SQLException, DataAccessException {  
 				 List<HisDataTimeAndValue> result = new ArrayList<HisDataTimeAndValue>();  
 				 while(rs.next()) {  
@@ -1658,7 +1660,7 @@ public class HisDataDao implements Serializable {
 	    		sb.append(" and DYBJID = "+buJianId+" ");
 	    	sb.append(" and DYBJParam ="+buJianCanshu+" ) "); 
 		    System.out.println(sb.toString());
-		    result = jdbcTemplateHis.query(sb.toString(), new ResultSetExtractor<List<HisDataTimeAndValue>>() { 
+		    result = jdbcTemplateHis.query(sb.toString(), new ResultSetExtractor<List<HisDataTimeAndValue>>() {
 		    public List<HisDataTimeAndValue> extractData(ResultSet rs)  throws SQLException, DataAccessException {  
 				 List<HisDataTimeAndValue> result = new ArrayList<HisDataTimeAndValue>();  
 				 while(rs.next()) {  
@@ -1754,7 +1756,7 @@ public class HisDataDao implements Serializable {
 		    	}
 		    	sb.append(" and DYBJParam ="+buJianCanshu+" ) GROUP BY RiQi "); 
 			    System.out.println(sb.toString());
-			    result = jdbcTemplateHis.query(sb.toString(), new ResultSetExtractor<List<HisDataTimeAndValue>>() { 
+			    result = jdbcTemplateHis.query(sb.toString(), new ResultSetExtractor<List<HisDataTimeAndValue>>() {
 			    public List<HisDataTimeAndValue> extractData(ResultSet rs)  throws SQLException, DataAccessException {  
 					 List<HisDataTimeAndValue> result = new ArrayList<HisDataTimeAndValue>();  
 					 while(rs.next()) {  
@@ -1972,7 +1974,7 @@ public class HisDataDao implements Serializable {
 				    sb.append(" and riqi = '" + year + "-"+month+"-"+day+" 0:"+fen+"' GROUP BY RiQi");
 		    	}
 			    System.out.println(sb.toString());
-			    result = jdbcTemplateHis.query(sb.toString(), new ResultSetExtractor<List<HisDataTimeAndValue>>() { 
+			    result = jdbcTemplateHis.query(sb.toString(), new ResultSetExtractor<List<HisDataTimeAndValue>>() {
 			    public List<HisDataTimeAndValue> extractData(ResultSet rs)  throws SQLException, DataAccessException {  
 					 List<HisDataTimeAndValue> result = new ArrayList<HisDataTimeAndValue>();  
 					 while(rs.next()) {  
@@ -2078,7 +2080,7 @@ public class HisDataDao implements Serializable {
 	
 		System.out.println(sb);
 		
-	    List<HisDataTimeAndValue> result = jdbcTemplateHis.query(sb.toString(), new ResultSetExtractor<List<HisDataTimeAndValue>>() { 
+	    List<HisDataTimeAndValue> result = jdbcTemplateHis.query(sb.toString(), new ResultSetExtractor<List<HisDataTimeAndValue>>() {
 	    public List<HisDataTimeAndValue> extractData(ResultSet rs)  throws SQLException, DataAccessException {  
 			 List<HisDataTimeAndValue> list = new ArrayList<HisDataTimeAndValue>();  
 			 while(rs.next()) {  
@@ -2139,7 +2141,7 @@ public class HisDataDao implements Serializable {
 	    	sb.append(" and DYBJID = "+bujianid+" ");
 	    	sb.append(" and DYBJParam ="+bujiancanshu+" ) "); 
 	    	System.out.println(sb);
-		    result = jdbcTemplateHis.query(sb.toString(), new ResultSetExtractor<List<HisDataTimeAndValue>>() { 
+		    result = jdbcTemplateHis.query(sb.toString(), new ResultSetExtractor<List<HisDataTimeAndValue>>() {
 		    public List<HisDataTimeAndValue> extractData(ResultSet rs)  throws SQLException, DataAccessException {  
 				 List<HisDataTimeAndValue> result = new ArrayList<HisDataTimeAndValue>();  
 				 while(rs.next()) {  
@@ -2257,7 +2259,7 @@ public class HisDataDao implements Serializable {
 	    System.out.println(sb.toString());
  
 	    try{
-		    result = jdbcTemplateHis.query(sb.toString(), new ResultSetExtractor<List<YCData>>() { 
+		    result = jdbcTemplateHis.query(sb.toString(), new ResultSetExtractor<List<YCData>>() {
 		    public List<YCData> extractData(ResultSet rs)  throws SQLException, DataAccessException {  
 				 List<YCData> result = new ArrayList<YCData>();  
 				 while(rs.next()) {  
@@ -2301,7 +2303,7 @@ public class HisDataDao implements Serializable {
 			sql.append(" and DYBJID = " + dyBujianID);
 		if(dyBujianParam!=0)
 			sql.append(" and DYBJType = " + dyBujianParam);
-		configMapOfYx = jdbcTemplateHis.query(sql.toString(), new ResultSetExtractor<Map<String,String>>() { 
+		configMapOfYx = jdbcTemplateHis.query(sql.toString(), new ResultSetExtractor<Map<String,String>>() {
 		    public Map<String,String> extractData(ResultSet rs)  throws SQLException, DataAccessException {
 		    	Map<String,String> configMapOfYx = new HashMap<String,String>();
 				 while(rs.next()) {
@@ -2458,7 +2460,7 @@ public class HisDataDao implements Serializable {
 			sql.append(" and DYBJID = " + dyBujianID);
 		if(dyBujianParam!=0)
 			sql.append(" and DYBJType = " + dyBujianParam);
-		configMapOfYc = jdbcTemplateHis.query(sql.toString(), new ResultSetExtractor<Map<String,String>>() { 
+		configMapOfYc = jdbcTemplateHis.query(sql.toString(), new ResultSetExtractor<Map<String,String>>() {
 		    public Map<String,String> extractData(ResultSet rs)  throws SQLException, DataAccessException {
 		    	Map<String,String> configMapOfYc = new HashMap<String,String>();
 				 while(rs.next()) {
@@ -2625,7 +2627,7 @@ public class HisDataDao implements Serializable {
 					+ "FROM commdev a LEFT JOIN changzhan b ON a.ChangZhanID = b.id WHERE 1=1 ");
 			if(dyBujianType!=0)
 				sql.append(" and BJLXID = " + dyBujianType);
-			bujianList = jdbcTemplateHis.query(sql.toString(), new ResultSetExtractor<List<Commdev>>() { 
+			bujianList = jdbcTemplateHis.query(sql.toString(), new ResultSetExtractor<List<Commdev>>() {
 			    public List<Commdev> extractData(ResultSet rs)  throws SQLException, DataAccessException {
 			    	List<Commdev> bujianListTemp = new ArrayList<Commdev>();
 					 while(rs.next()) {
@@ -2640,7 +2642,7 @@ public class HisDataDao implements Serializable {
 			}});
 		}else {
 			sql.append("SELECT ID AS changzhanID, mingzi AS changzhanName FROM changzhan WHERE 1=1");
-			bujianList = jdbcTemplateHis.query(sql.toString(), new ResultSetExtractor<List<Commdev>>() { 
+			bujianList = jdbcTemplateHis.query(sql.toString(), new ResultSetExtractor<List<Commdev>>() {
 			    public List<Commdev> extractData(ResultSet rs)  throws SQLException, DataAccessException {
 			    	List<Commdev> bujianListTemp = new ArrayList<Commdev>();
 					 while(rs.next()) {
@@ -2672,7 +2674,7 @@ public class HisDataDao implements Serializable {
 
 		sql.append("SELECT config_ID,config_Name,config_Type,device_Type,device_ID,device_Param,"
 				+ "chang_ZhanID,push_Strategy,calc_Interval,valid_flag  FROM mscq.warnpushconfig WHERE 1=1");
-		listStrategy = jdbcTemplateHis.query(sql.toString(), new ResultSetExtractor<List<s_warn_strategy>>() { 
+		listStrategy = jdbcTemplateHis.query(sql.toString(), new ResultSetExtractor<List<s_warn_strategy>>() {
 		    public List<s_warn_strategy> extractData(ResultSet rs)  throws SQLException, DataAccessException {
 		    	List<s_warn_strategy> warnListTemp = new ArrayList<s_warn_strategy>();
 				 while(rs.next()) {
@@ -2708,7 +2710,7 @@ public class HisDataDao implements Serializable {
 				strSql.append(" where "+strWhere);
 			}
 			
-			List<cn.zup.iot.timerdecision.model.Warnfactorconfig> list = jdbcTemplateHis.query(strSql.toString(), 
+			List<cn.zup.iot.timerdecision.model.Warnfactorconfig> list = jdbcTemplateHis.query(strSql.toString(),
 					new ResultSetExtractor<List<cn.zup.iot.timerdecision.model.Warnfactorconfig>>(){
 
 				@Override

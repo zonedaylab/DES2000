@@ -31,6 +31,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
+
 /***
  * 决策树接口
  * @author samson
@@ -40,9 +42,10 @@ import org.springframework.stereotype.Component;
 public class DiagnosisDao implements Serializable {
 	private JdbcTemplate jdbcTemplateDia;
 	
-	public JdbcTemplate getJdbcTemplateDia() {
-		return jdbcTemplateDia;
-	}
+//	public JdbcTemplate getJdbcTemplateDia() {
+//		return jdbcTemplateDia;
+//	}
+//
 	public void setJdbcTemplateDia(JdbcTemplate jdbcTemplateDia) {
 		this.jdbcTemplateDia = jdbcTemplateDia;
 	}
@@ -138,7 +141,7 @@ public class DiagnosisDao implements Serializable {
 			sql = "update PM_DIAGNOSIS set diagnosis_Time = str_to_date('"+sdf.format(diagnosis.getDiagnosis_Time())+"','%Y-%m-%d %H:%i:%s'),diagnosis_Result =  '"+diagnosis.getDiagnosis_Result()+"',diagnosis_Code = '"+diagnosis.getDiagnosis_Code()+"' where result_Id = '"+diagnosis.getResult_Id()+"'";
 			final String sqlStr = sql;
 //			System.out.println(sqlStr);
-			jdbcTemplateDia.update(sqlStr); 
+			jdbcTemplateDia.update(sqlStr);
 		} catch (Exception e) {
 			System.out.println("editDiagnosis()异常:" + e.toString());
 		}		
@@ -168,7 +171,7 @@ public class DiagnosisDao implements Serializable {
 			sql = " INSERT INTO PM_DIAGNOSIS (city_Name, device_Id, device_Name, device_Type, diagnosis_Code, diagnosis_Result, diagnosis_Time, province_Name, real_Reason, reg_Date, reg_Person) VALUES("+sql+") ";
 			final String sqlStr = sql;
 //			System.out.println(sqlStr);
-			jdbcTemplateDia.update(sqlStr); 
+			jdbcTemplateDia.update(sqlStr);
 		} catch (Exception e) {
 			System.out.println("addDiagnosis()异常:" + e.toString());
 		}	

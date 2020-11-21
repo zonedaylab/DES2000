@@ -8,6 +8,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.io.Serializable;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -17,9 +18,11 @@ import java.util.HashMap;
 @Component
 public class InitTreeDao implements Serializable {
     private JdbcTemplate jdbcTemplateInit;
-    public JdbcTemplate getJdbcTemplateInit() {
-        return jdbcTemplateInit;
-    }
+
+//    public JdbcTemplate getJdbcTemplateInit() {
+//        return jdbcTemplateInit;
+//    }
+//
     public void setJdbcTemplateInit(JdbcTemplate jdbcTemplateInit) {
         this.jdbcTemplateInit = jdbcTemplateInit;
     }

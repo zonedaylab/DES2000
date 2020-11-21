@@ -35,23 +35,25 @@ import cn.zup.iot.timerdecision.service.settings.HuaWeiSunParam;
 import cn.zup.iot.timerdecision.service.settings.RegionType;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
+
 @Component
 public class DeviceDao implements Serializable {
 	private JdbcTemplate jdbcTemplate;
 
-	public JdbcTemplate getJdbcTemplate() {
-		return jdbcTemplate;
-	}
-
+//	public JdbcTemplate getJdbcTemplate() {
+//		return jdbcTemplate;
+//	}
+//
 	public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
 		this.jdbcTemplate = jdbcTemplate;
 	}
 	/**
-     * 获取遥信数据 
+     * 获取遥信数据
      * @param id
      * @return
      */
-    public YXData getYXXNData(int id, String time) 
+    public YXData getYXXNData(int id, String time)
 	{
 		List<YXData> lists = new ArrayList<YXData>();
 		//将传过来的当前日期加15分钟
@@ -86,26 +88,26 @@ public class DeviceDao implements Serializable {
 		    }
 		    String tableName = "ycdata" + year + month;
 		    StringBuffer sb= new StringBuffer();
-		    
-		    
+
+
 	    	sb.append(" select a.*,b.StationName,b.StationCode,d.MingZi as cityName,e.MingZi as proviceName,g.voltage as voltage,h.circuit as circuit from xunizhtliang a  " +
 	    				" left join stationinfo b on a.ChangZhanID=b.ChangZhanID  " +
 	    				" left join changzhan c on c.id = b.ChangZhanID  " +
-	    				
+
 	    				" left join subnet_ems d on d.id = c.SUBNETID  " +//乡镇
 	    				" left join subnet_ems e on e.id=d.parentId "+//	区县
 	    				" left join subnet_ems ee on ee.id=e.parentId and ee.parentId=0  "+//市
-	    				
+
 	    				"left join (select "+Hour+" AS voltage from ls."+tableName+" where riqi = '"+ year +"-"+ month +"-"+ day +" 00:"+fen+"' AND BuJianLeiXingID = 20 AND BuJianCanShuID = 2 AND bujianid IN "+
 	    				"( select id as bujianid from ms.xunidmnliang where dybjtype = "+BJLX.huaweinibianqi.getValue()+" and dybjid = "+
 	    				"(select a.dybjid from xunizhtliang a where a.id = "+id+" )"+
 	    				" and dybjparam = "+HuaWeiSunParam.adianya.getValue()+" )) g on 1=1 "+
-	    				
+
 	    				"left join (select "+Hour+" AS circuit from ls."+tableName+" where riqi = '"+ year +"-"+ month +"-"+ day +" 00:"+fen+"' AND BuJianLeiXingID = 20 AND BuJianCanShuID = 2 AND bujianid IN "+
 	    				"( select id as bujianid from ms.xunidmnliang where dybjtype = "+BJLX.huaweinibianqi.getValue()+" and dybjid = "+
 	    				"(select a.dybjid from xunizhtliang a where a.id = "+id+" )"+
 	    				" and dybjparam = "+HuaWeiSunParam.adianliu.getValue()+" )) h on 1=1"+
-	    				
+
 	    				" where a.id = "+id);
 //	    	System.out.println(sb.toString());
 			try {
@@ -138,19 +140,19 @@ public class DeviceDao implements Serializable {
 		if(lists.size()>0)
 			return lists.get(0);
 		else
-			return null;	
-	} 
-    
-    
+			return null;
+	}
+
+
 	/***
-	 * 将pms中告警信息同步到monitor中 
+	 * 将pms中告警信息同步到monitor中
 	 * @param pmWarnRecord
-	 * @return 
+	 * @return
 	 */
     public void InsertWarnRecordToMonitor(PmWarnRecord pmWarnRecord)
 	{
-		SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");  
-		String sql=""; 
+		SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		String sql="";
 		try {
 			sql ="INSERT INTO WARNRECORD (WARN_RECORD_ID,EQUIPMENT_ID,ASSET_ID,REAL_WARN_ID,WARN_NAME,WARN_SET_ID,WARN_LEVEL" +
 					",WARN_TYPE,STATION_ID,OCCUR_TIME,OCCUR_RECOVER,WARN_STATUS,STATION_NAME,EQUIPMENT_NAME,WARN_SOURCE,PROVINCENAME,CITYNAME" +
@@ -158,22 +160,22 @@ public class DeviceDao implements Serializable {
 			sql +=pmWarnRecord.getWarn_Record_Id()==null?0+",": pmWarnRecord.getWarn_Record_Id()+",";//告警ID
 			sql +=pmWarnRecord.getEquipment_Id()==null?0+",": pmWarnRecord.getEquipment_Id()+",";//设备ID
 			sql +=pmWarnRecord.getAsset_Id()==null?0+",": pmWarnRecord.getAsset_Id()+",";// 资产ID
-			sql +=pmWarnRecord.getReal_Warn_Id()==null?0+",": pmWarnRecord.getReal_Warn_Id()+",";// 
-			sql +=pmWarnRecord.getWarn_Name()==null?"'',": "'"+pmWarnRecord.getWarn_Name()+"',";// 
-			sql +=pmWarnRecord.getWarn_Set_Id()==null?0+",": pmWarnRecord.getWarn_Set_Id()+",";// 
-			sql +=pmWarnRecord.getWarn_Level()==null?0+",": pmWarnRecord.getWarn_Level()+",";// 
-			sql +=pmWarnRecord.getWarn_Type()==null?0+",": pmWarnRecord.getWarn_Type()+",";// 
-			sql +=pmWarnRecord.getStation_Id()==null?0+",": pmWarnRecord.getStation_Id()+",";// 
-			sql +=pmWarnRecord.getOccur_Time()==null?"str_to_date('2016-10-24 01:01:01','%Y-%m-%d %H:%i:%s'),": "str_to_date('"+sdf.format(pmWarnRecord.getOccur_Time())+"','%Y-%m-%d %H:%i:%s'),";// 
-			sql +=pmWarnRecord.getOccur_Recover()==null?"NULL,": "str_to_date('"+sdf.format(pmWarnRecord.getOccur_Recover())+"','%Y-%m-%d %H:%i:%s'),";// 
-			sql +=pmWarnRecord.getWarn_Status()==null?0: pmWarnRecord.getWarn_Status()+",";// 
+			sql +=pmWarnRecord.getReal_Warn_Id()==null?0+",": pmWarnRecord.getReal_Warn_Id()+",";//
+			sql +=pmWarnRecord.getWarn_Name()==null?"'',": "'"+pmWarnRecord.getWarn_Name()+"',";//
+			sql +=pmWarnRecord.getWarn_Set_Id()==null?0+",": pmWarnRecord.getWarn_Set_Id()+",";//
+			sql +=pmWarnRecord.getWarn_Level()==null?0+",": pmWarnRecord.getWarn_Level()+",";//
+			sql +=pmWarnRecord.getWarn_Type()==null?0+",": pmWarnRecord.getWarn_Type()+",";//
+			sql +=pmWarnRecord.getStation_Id()==null?0+",": pmWarnRecord.getStation_Id()+",";//
+			sql +=pmWarnRecord.getOccur_Time()==null?"str_to_date('2016-10-24 01:01:01','%Y-%m-%d %H:%i:%s'),": "str_to_date('"+sdf.format(pmWarnRecord.getOccur_Time())+"','%Y-%m-%d %H:%i:%s'),";//
+			sql +=pmWarnRecord.getOccur_Recover()==null?"NULL,": "str_to_date('"+sdf.format(pmWarnRecord.getOccur_Recover())+"','%Y-%m-%d %H:%i:%s'),";//
+			sql +=pmWarnRecord.getWarn_Status()==null?0: pmWarnRecord.getWarn_Status()+",";//
 			sql +=pmWarnRecord.getStation_Name()==null?"'',": "'"+pmWarnRecord.getStation_Name()+"',";// 电站名称
 			sql +=pmWarnRecord.getEquipment_Name()==null?"'',": "'"+pmWarnRecord.getEquipment_Name()+"',";// 设备名称
-			sql +=pmWarnRecord.getWarn_Source()==null?0+",": pmWarnRecord.getWarn_Source()+",";// 告警来源 
+			sql +=pmWarnRecord.getWarn_Source()==null?0+",": pmWarnRecord.getWarn_Source()+",";// 告警来源
 			sql +=pmWarnRecord.getProvinceName()==null?"'',": "'"+pmWarnRecord.getProvinceName()+"',";// 省名称
 			sql +=pmWarnRecord.getCityName()==null?"'',": "'"+pmWarnRecord.getCityName()+"',";// 城市名称
 			sql +=pmWarnRecord.getEquipment_Code()==null?"'',": "'"+pmWarnRecord.getEquipment_Code()+"',";// 设备编号
-			sql +=pmWarnRecord.getSend_State()==null?0: pmWarnRecord.getSend_State()+",";// 发送状态 
+			sql +=pmWarnRecord.getSend_State()==null?0: pmWarnRecord.getSend_State()+",";// 发送状态
 			sql +=pmWarnRecord.getVoltage()==null?0+",": pmWarnRecord.getVoltage()+",";//电压
 			sql +=pmWarnRecord.getCircuit()==null?0+",": pmWarnRecord.getCircuit()+",";//电流
 			sql +=pmWarnRecord.getRecover_Way()==null?0:0;//电流
@@ -181,12 +183,12 @@ public class DeviceDao implements Serializable {
 			final String sqlStr = sql;
 			System.out.println(sqlStr);
 		 	jdbcTemplate.update(sqlStr);
-		 
+
 		} catch (Exception e) {
 			System.out.println("InsertWarnRecord()异常:" + e.toString());
 		}
 	}
-	
+
 	/***
 	 * 更新数据库告警结束时间
 	 * @param  warnRecordId
@@ -201,12 +203,12 @@ public class DeviceDao implements Serializable {
 			sql = "update warnrecord set occur_recover = str_to_date('"+nowDate+"','%Y-%m-%d %H:%i:%s'), warn_status = 5, recover_Way = '"+recoverWay+"', SEND_STATE = 2 where warn_record_id = '"+warnRecordId+"'";
 			final String sqlStr = sql;
 			System.out.println(sqlStr);
-		 	jdbcTemplate.update(sqlStr); 
+		 	jdbcTemplate.update(sqlStr);
 		} catch (Exception e) {
 			System.out.println("InsertWarnRecord()异常:" + e.toString());
 		}
 	}
-	
+
 	/**
 	 * 获取区域下电站的详细信息
 	 * mxf
@@ -251,12 +253,12 @@ public class DeviceDao implements Serializable {
 	    	}
 	    });
 	}
-	
+
 	/*
 	 * desc:获取通用设备信息
 	 * Author：samson
 	 * Date: 2016.06.28
-	 * 
+	 *
 	 * */
     public List<Commdev> getCommdevInfo(String changzhanID,String bjlxID,String bjID) {
     	  String sqlStr = "select BJLXID,ID,ChangZhanID,MingZi,ShuoMing,'' Bujianleixingname,'' SubNetId from commdev where 1=1 ";
@@ -271,9 +273,9 @@ public class DeviceDao implements Serializable {
   	        	public Commdev mapRow(ResultSet rs,int index) throws SQLException {
   	            	return new Commdev(rs.getInt("ID"),rs.getInt("BJLXID"),rs.getInt("ChangZhanID"),rs.getString("MingZi"),rs.getString("SubNetId"),rs.getString("Bujianleixingname"),rs.getString("ShuoMing"));
   	        	}
-          }); 
-	}  
-    
+          });
+	}
+
     /**
 	 * 获取逆变器工作的组串
 	 * mxf
@@ -313,7 +315,7 @@ public class DeviceDao implements Serializable {
 			}
 		}
 	}
-	
+
 	/**
 	 * 获取区域下的逆变器
 	 * @param regionType
@@ -326,7 +328,7 @@ public class DeviceDao implements Serializable {
 		sb.append(" select t.id from changzhan t inner join subnet_ems t1 on t.subnetid = t1.id" );//关联乡镇
 		sb.append(" inner join subnet_ems t2 on t1.parentid = t2.id ");//关联区县
 		sb.append(" inner join subnet_ems t3 on t2.parentid = t3.id where 1=1");//关联城市
-		
+
 		if(regionType == RegionType.city.getValue()) {//市
 			sb.append(" and t3.id=" + regionId);
 		} else if (regionType == RegionType.county.getValue()) {
@@ -336,7 +338,7 @@ public class DeviceDao implements Serializable {
 		} else if(regionType == RegionType.village.getValue()) {
 			sb.append(" and t.id=" + regionId);
 		}
-		
+
 		sb.append(")");
 		System.out.println(sb);
 		List<Commdev> lists = jdbcTemplate.query(sb.toString(),

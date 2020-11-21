@@ -26,11 +26,14 @@ import cn.zup.iot.timerdecision.model.YCInfoData;
 import cn.zup.iot.timerdecision.service.settings.BJLX;
 import cn.zup.iot.timerdecision.service.settings.ChangZhanParam;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
 
 /***
  * 决策树接口
@@ -41,12 +44,13 @@ import org.springframework.stereotype.Component;
 public class DecisionDao implements Serializable {
 	//需要显示的电站状态
 	private String stationStat = "4"; //代表已监控电站
+
 	private JdbcTemplate jdbcTemplateDeci;
 
-	public JdbcTemplate getJdbcTemplateDeci() {
-		return jdbcTemplateDeci;
-	}
-
+//	public JdbcTemplate getjdbcTemplateDeci() {
+//		return jdbcTemplateDeci;
+//	}
+//
 	public void setJdbcTemplateDeci(JdbcTemplate jdbcTemplateDeci) {
 		this.jdbcTemplateDeci = jdbcTemplateDeci;
 	}

@@ -34,16 +34,17 @@ import cn.zup.iot.timerdecision.service.settings.WarnLevel;
 import cn.zup.iot.timerdecision.service.settings.WarnSource;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
+
 @Component
 public class ScadaWarnPushDao implements Serializable {
   
 	private JdbcTemplate jdbcTemplateWarn;
-	
-	
-	public JdbcTemplate getJdbcTemplateWarn() {
-		return jdbcTemplateWarn;
-	}
 
+//	public JdbcTemplate getJdbcTemplateWarn() {
+//		return jdbcTemplateWarn;
+//	}
+//
 	public void setJdbcTemplateWarn(JdbcTemplate jdbcTemplateWarn) {
 		this.jdbcTemplateWarn = jdbcTemplateWarn;
 	}
@@ -55,24 +56,24 @@ public class ScadaWarnPushDao implements Serializable {
 	 */
 	public PmWarnRecord GetWarnRecordFlag(YXData yx)
 	{
-		
-		List<PmWarnRecord> listPmWarnRecord = new ArrayList<PmWarnRecord>();		
-		String sqlString ; 
+
+		List<PmWarnRecord> listPmWarnRecord = new ArrayList<PmWarnRecord>();
+		String sqlString ;
 		sqlString=" SELECT A.WARN_ID,A.WARN_NAME,A.WARN_CONTENTS,B.WARN_SET_ID,C.WARN_SET_NAME,C.WARN_LEVEL,C.WARN_TYPE,D.STATION_NAME, " +
 		  		  " D.STATION_ID,D.REAL_WARN_ID,D.WARN_RECORD_ID,E.ASSET_ID,E.ASSET_NAME,E.ASSET_CODE,E.EQUIPMENT_ID    " +
 				  " FROM PM_WARN_SOURCE A  " +
 				  " LEFT JOIN PM_WARN_RELATION B ON A.WARN_SOURCE_ID = b.WARN_SOURCE_ID  "+
 				  " LEFT JOIN PM_WARN_SET C ON C.WARN_SET_ID = B.WARN_SET_ID "+
-				  " LEFT JOIN ENERGY_ASSETS E on E.ASSET_MODEL_ID = C.MATERIAL_MODEL_ID " + 
-				  " LEFT JOIN PM_WARN_RECORD D ON D.WARN_SET_ID = C.WARN_SET_ID  AND D.WARN_STATUS = 1  AND D.EQUIPMENT_ID = E.EQUIPMENT_ID where 1=1  " ; 
-		
+				  " LEFT JOIN ENERGY_ASSETS E on E.ASSET_MODEL_ID = C.MATERIAL_MODEL_ID " +
+				  " LEFT JOIN PM_WARN_RECORD D ON D.WARN_SET_ID = C.WARN_SET_ID  AND D.WARN_STATUS = 1  AND D.EQUIPMENT_ID = E.EQUIPMENT_ID where 1=1  " ;
+
 		if(yx.getBuJianCanShu() !=0)
 			sqlString += " and A.WARN_ID = "+ yx.getBuJianCanShu();
 		if(yx.getBuJianLeiXing() !=0)
 			sqlString += " and A.PARTS_TYPE = "+ yx.getBuJianLeiXing();
 		if(yx.getBuJianId() !=0)
 			sqlString += " and E.EQUIPMENT_ID = "+ yx.getBuJianId();
-				
+
 		//System.out.println(sqlString);
 		try {
 			listPmWarnRecord = jdbcTemplateWarn.query(sqlString,
@@ -80,7 +81,7 @@ public class ScadaWarnPushDao implements Serializable {
 						public PmWarnRecord mapRow(ResultSet rs, int rowNum)
 							throws SQLException {
 							PmWarnRecord warnRecord = new PmWarnRecord();
-							warnRecord.setWarn_Record_Id(rs.getInt("WARN_RECORD_ID")); //如果为null则表示添加 如果不为空则不进行操作 
+							warnRecord.setWarn_Record_Id(rs.getInt("WARN_RECORD_ID")); //如果为null则表示添加 如果不为空则不进行操作
 							warnRecord.setEquipment_Id(rs.getInt("EQUIPMENT_ID"));
 							warnRecord.setEquipment_Code(rs.getString("ASSET_CODE"));
 							warnRecord.setEquipment_Name(rs.getString("ASSET_NAME"));
@@ -99,38 +100,38 @@ public class ScadaWarnPushDao implements Serializable {
 		if(listPmWarnRecord.size()==0)
 			return null;
 		else
-			return listPmWarnRecord.get(0);	
+			return listPmWarnRecord.get(0);
 	}
-	
+
 	/***
-	 * 插入警告信息 
+	 * 插入警告信息
 	 * @param pmWarnRecord
-	 * @return 
+	 * @return
 	 */
 	public boolean InsertWarnRecordtemp(PmWarnRecord pmWarnRecord)
 	{
-		SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");  
+		SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		String sql="";
 		sql =" SEQ_PM_WARN_RECORD.nextval,";
 		sql +=pmWarnRecord.getEquipment_Id()==null?0+",": pmWarnRecord.getEquipment_Id()+",";//设备ID
 		sql +=pmWarnRecord.getAsset_Id()==null?0+",": pmWarnRecord.getAsset_Id()+",";// 资产ID
-		sql +=pmWarnRecord.getReal_Warn_Id()==null?0+",": pmWarnRecord.getReal_Warn_Id()+",";// 
-		sql +=pmWarnRecord.getWarn_Name()==null?"'',": "'"+pmWarnRecord.getWarn_Name()+"',";// 
-		sql +=pmWarnRecord.getWarn_Set_Id()==null?0+",": pmWarnRecord.getWarn_Set_Id()+",";// 
-		sql +=pmWarnRecord.getWarn_Level()==null?0+",": pmWarnRecord.getWarn_Level()+",";// 
-		sql +=pmWarnRecord.getWarn_Type()==null?0+",": pmWarnRecord.getWarn_Type()+",";// 
-		sql +=pmWarnRecord.getStation_Id()==null?0+",": pmWarnRecord.getStation_Id()+",";// 
-		sql +=pmWarnRecord.getOccur_Time()==null?"to_date('2016-10-24 01:01:01','yyyy-mm-dd hh24:mi:ss'),": "to_date('"+sdf.format(pmWarnRecord.getOccur_Time())+"','yyyy-mm-dd hh24:mi:ss'),";// 
-		sql +=pmWarnRecord.getOccur_Recover()==null?"NULL,": "to_date('"+sdf.format(pmWarnRecord.getOccur_Recover())+"','yyyy-mm-dd hh24:mi:ss'),";// 
-		sql +=pmWarnRecord.getWarn_Status()==null?0: pmWarnRecord.getWarn_Status()+",";// 
+		sql +=pmWarnRecord.getReal_Warn_Id()==null?0+",": pmWarnRecord.getReal_Warn_Id()+",";//
+		sql +=pmWarnRecord.getWarn_Name()==null?"'',": "'"+pmWarnRecord.getWarn_Name()+"',";//
+		sql +=pmWarnRecord.getWarn_Set_Id()==null?0+",": pmWarnRecord.getWarn_Set_Id()+",";//
+		sql +=pmWarnRecord.getWarn_Level()==null?0+",": pmWarnRecord.getWarn_Level()+",";//
+		sql +=pmWarnRecord.getWarn_Type()==null?0+",": pmWarnRecord.getWarn_Type()+",";//
+		sql +=pmWarnRecord.getStation_Id()==null?0+",": pmWarnRecord.getStation_Id()+",";//
+		sql +=pmWarnRecord.getOccur_Time()==null?"to_date('2016-10-24 01:01:01','yyyy-mm-dd hh24:mi:ss'),": "to_date('"+sdf.format(pmWarnRecord.getOccur_Time())+"','yyyy-mm-dd hh24:mi:ss'),";//
+		sql +=pmWarnRecord.getOccur_Recover()==null?"NULL,": "to_date('"+sdf.format(pmWarnRecord.getOccur_Recover())+"','yyyy-mm-dd hh24:mi:ss'),";//
+		sql +=pmWarnRecord.getWarn_Status()==null?0: pmWarnRecord.getWarn_Status()+",";//
 		sql +=pmWarnRecord.getStation_Name()==null?"'',": "'"+pmWarnRecord.getStation_Name()+"',";// 电站名称
 		sql +=pmWarnRecord.getEquipment_Name()==null?"'',": "'"+pmWarnRecord.getEquipment_Name()+"',";// 设备名称
-		sql +=pmWarnRecord.getWarn_Source()==null?0+",": pmWarnRecord.getWarn_Source()+",";// 告警来源 
+		sql +=pmWarnRecord.getWarn_Source()==null?0+",": pmWarnRecord.getWarn_Source()+",";// 告警来源
 		sql +=pmWarnRecord.getProvinceName()==null?"'',": "'"+pmWarnRecord.getProvinceName()+"',";// 省名称
 		sql +=pmWarnRecord.getCityName()==null?"'',": "'"+pmWarnRecord.getCityName()+"',";// 城市名称
 		sql +=pmWarnRecord.getEquipment_Code()==null?"'',": "'"+pmWarnRecord.getEquipment_Code()+"',";// 设备编号
-		sql +=pmWarnRecord.getSend_State()==null?0: pmWarnRecord.getSend_State();// 发送状态 
-		
+		sql +=pmWarnRecord.getSend_State()==null?0: pmWarnRecord.getSend_State();// 发送状态
+
 		final String sqlStr = " INSERT INTO PM_WARN_RECORD VALUES("+sql+") ";
 		KeyHolder key=new GeneratedKeyHolder();
 		this.jdbcTemplateWarn.update(new PreparedStatementCreator(){
@@ -141,19 +142,19 @@ public class ScadaWarnPushDao implements Serializable {
 			}
 		},key);
 		pmWarnRecord.setWarn_Record_Id(key.getKey().intValue());
-		
-		
+
+
 		return true;
 	}
 	/**
 	 *
 	 * @return
 	 */
-	
+
 	public List<PmWarnRecord> GetWarnRecordList()
 	{
-		List<PmWarnRecord> listPmWarnRecordList = new ArrayList<PmWarnRecord>();		
-    	StringBuffer sb= new StringBuffer(); 
+		List<PmWarnRecord> listPmWarnRecordList = new ArrayList<PmWarnRecord>();
+    	StringBuffer sb= new StringBuffer();
     	sb.append(" select warn_record_id, equipment_id, asset_id, real_Warn_Id,warn_name, warn_set_id, warn_level, warn_type, station_id,occur_time,occur_recover, " +
 				"		warn_status, station_name,equipment_name, warn_source, provincename,cityname, equipment_code, send_state, voltage, circuit " +
 				"	from pm_warn_record " +
@@ -194,7 +195,7 @@ public class ScadaWarnPushDao implements Serializable {
 		} catch (Exception e) {
 			System.out.println("GetWarnRecordFlag()异常:" + e.toString());
 		}
-			return listPmWarnRecordList;	
+			return listPmWarnRecordList;
 	}
 	/**
 	 * @Author ZhangSC
@@ -258,8 +259,8 @@ public class ScadaWarnPushDao implements Serializable {
 	 */
 	public List<PmWarnRecord> GetWarntrueflagList(int stationId,int equipmentId)
 	{
-		List<PmWarnRecord> listPmWarnRecordList = new ArrayList<PmWarnRecord>();		
-    	StringBuffer sb= new StringBuffer(); 
+		List<PmWarnRecord> listPmWarnRecordList = new ArrayList<PmWarnRecord>();
+    	StringBuffer sb= new StringBuffer();
     	sb.append(" select warn_record_id, equipment_id, asset_id, real_Warn_Id,warn_name, warn_set_id, warn_level, warn_type, station_id,occur_time,occur_recover, " +
 				"		warn_status, station_name,equipment_name, warn_source, provincename,cityname, equipment_code, send_state, voltage, circuit " +
 				"	from pm_warn_record " +
@@ -275,7 +276,7 @@ public class ScadaWarnPushDao implements Serializable {
 		 * equipment_id厂站Id
 		 * strResultCode=6为决策6分组电量对比
 		 */
-    	
+
 		System.out.println(sb.toString());
 		try {
 			listPmWarnRecordList = jdbcTemplateWarn.query(sb.toString(),
@@ -310,17 +311,17 @@ public class ScadaWarnPushDao implements Serializable {
 		} catch (Exception e) {
 			System.out.println("GetWarnRecordFlag()异常:" + e.toString());
 		}
-			return listPmWarnRecordList;	
+			return listPmWarnRecordList;
 	}
-	
+
 	public List<PmWarnRecord> GetWarnOperateRecordList(String Code)
 	{
-		List<PmWarnRecord> listPmWarnRecordList = new ArrayList<PmWarnRecord>();		
-		String sqlString ; 
+		List<PmWarnRecord> listPmWarnRecordList = new ArrayList<PmWarnRecord>();
+		String sqlString ;
 		sqlString=" select warn_record_id, equipment_id, asset_id, real_Warn_Id,warn_name, warn_set_id, warn_level, warn_type, station_id,occur_time,occur_recover, " +
 				"		warn_status, station_name,equipment_name, warn_source, provincename,cityname, equipment_code, send_state, voltage, circuit from pm_warn_record " +
 				"	where warn_status = 1 and warn_level = "+WarnLevel.stationOperation.getValue()+" and (recover_way is null or recover_way = 0)";
-				
+
 		if(!Code.equals(""))
 			sqlString += " and REAL_WARN_ID in("+Code+") ";
 //		System.out.println(sqlString);
@@ -357,17 +358,17 @@ public class ScadaWarnPushDao implements Serializable {
 		} catch (Exception e) {
 			System.out.println("GetWarnRecordFlag()异常:" + e.toString());
 		}
-			return listPmWarnRecordList;	
+			return listPmWarnRecordList;
 	}
 	/**
 	 *
 	 * @return
 	 */
-	
+
 	public List<PmWarnRecord> GetStatusWarnRecordList()
 	{
 		List<PmWarnRecord> listPmWarnRecordList = new ArrayList<PmWarnRecord>();
-    	StringBuffer sb= new StringBuffer(); 
+    	StringBuffer sb= new StringBuffer();
     	sb.append(" select warn_record_id, equipment_id, asset_id, real_Warn_Id,warn_name, warn_set_id, warn_level, warn_type, station_id,occur_time,occur_recover, " +
 				"		warn_status, station_name,equipment_name, warn_source, provincename,cityname, equipment_code, send_state, voltage, circuit " +
 				"	from pm_warn_record " +
@@ -408,7 +409,7 @@ public class ScadaWarnPushDao implements Serializable {
 		} catch (Exception e) {
 			System.out.println("GetWarnRecordFlag()异常:" + e.toString());
 		}
-			return listPmWarnRecordList;	
+			return listPmWarnRecordList;
 	}
 	/**
 	 *
@@ -524,37 +525,37 @@ public class ScadaWarnPushDao implements Serializable {
 		return listPmWarnRecordList;
 	}
 	/***
-	 * 插入警告信息 
+	 * 插入警告信息
 	 * @param pmWarnRecord
-	 * @return 
+	 * @return
 	 */
-	
+
 	public PmWarnRecord InsertWarnRecord(PmWarnRecord pmWarnRecord)
 	{
-		SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");  
-		String sql=""; 
+		SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		String sql="";
 		try {
 			sql ="INSERT INTO PM_WARN_RECORD (EQUIPMENT_ID,ASSET_ID,REAL_WARN_ID,WARN_NAME,WARN_SET_ID,WARN_LEVEL" +
 					",WARN_TYPE,STATION_ID,OCCUR_TIME,OCCUR_RECOVER,WARN_STATUS,STATION_NAME,EQUIPMENT_NAME,WARN_SOURCE,PROVINCENAME,CITYNAME" +
 					",EQUIPMENT_CODE,SEND_STATE,VOLTAGE,CIRCUIT,RECOVER_WAY) VALUES(";
 			sql +=pmWarnRecord.getEquipment_Id()==null?0+",": pmWarnRecord.getEquipment_Id()+",";//设备ID
 			sql +=pmWarnRecord.getAsset_Id()==null?0+",": pmWarnRecord.getAsset_Id()+",";// 资产ID
-			sql +=pmWarnRecord.getReal_Warn_Id()==null?0+",": pmWarnRecord.getReal_Warn_Id()+",";// 
-			sql +=pmWarnRecord.getWarn_Name()==null?"'',": "'"+pmWarnRecord.getWarn_Name()+"',";// 
-			sql +=pmWarnRecord.getWarn_Set_Id()==null?0+",": pmWarnRecord.getWarn_Set_Id()+",";// 
-			sql +=pmWarnRecord.getWarn_Level()==null?0+",": pmWarnRecord.getWarn_Level()+",";// 
-			sql +=pmWarnRecord.getWarn_Type()==null?0+",": pmWarnRecord.getWarn_Type()+",";// 
-			sql +=pmWarnRecord.getStation_Id()==null?0+",": pmWarnRecord.getStation_Id()+",";// 
-			sql +=pmWarnRecord.getOccur_Time()==null?"str_to_date('2016-10-24 01:01:01','%Y-%m-%d %H:%i:%s'),": "str_to_date('"+sdf.format(pmWarnRecord.getOccur_Time())+"','%Y-%m-%d %H:%i:%s'),";// 
-			sql +=pmWarnRecord.getOccur_Recover()==null?"NULL,": "str_to_date('"+sdf.format(pmWarnRecord.getOccur_Recover())+"','%Y-%m-%d %H:%i:%s'),";// 
-			sql +=pmWarnRecord.getWarn_Status()==null?0: pmWarnRecord.getWarn_Status()+",";// 
+			sql +=pmWarnRecord.getReal_Warn_Id()==null?0+",": pmWarnRecord.getReal_Warn_Id()+",";//
+			sql +=pmWarnRecord.getWarn_Name()==null?"'',": "'"+pmWarnRecord.getWarn_Name()+"',";//
+			sql +=pmWarnRecord.getWarn_Set_Id()==null?0+",": pmWarnRecord.getWarn_Set_Id()+",";//
+			sql +=pmWarnRecord.getWarn_Level()==null?0+",": pmWarnRecord.getWarn_Level()+",";//
+			sql +=pmWarnRecord.getWarn_Type()==null?0+",": pmWarnRecord.getWarn_Type()+",";//
+			sql +=pmWarnRecord.getStation_Id()==null?0+",": pmWarnRecord.getStation_Id()+",";//
+			sql +=pmWarnRecord.getOccur_Time()==null?"str_to_date('2016-10-24 01:01:01','%Y-%m-%d %H:%i:%s'),": "str_to_date('"+sdf.format(pmWarnRecord.getOccur_Time())+"','%Y-%m-%d %H:%i:%s'),";//
+			sql +=pmWarnRecord.getOccur_Recover()==null?"NULL,": "str_to_date('"+sdf.format(pmWarnRecord.getOccur_Recover())+"','%Y-%m-%d %H:%i:%s'),";//
+			sql +=pmWarnRecord.getWarn_Status()==null?0: pmWarnRecord.getWarn_Status()+",";//
 			sql +=pmWarnRecord.getStation_Name()==null?"'',": "'"+pmWarnRecord.getStation_Name()+"',";// 电站名称
 			sql +=pmWarnRecord.getEquipment_Name()==null?"'',": "'"+pmWarnRecord.getEquipment_Name()+"',";// 设备名称
-			sql +=pmWarnRecord.getWarn_Source()==null?0+",": pmWarnRecord.getWarn_Source()+",";// 告警来源 
+			sql +=pmWarnRecord.getWarn_Source()==null?0+",": pmWarnRecord.getWarn_Source()+",";// 告警来源
 			sql +=pmWarnRecord.getProvinceName()==null?"'',": "'"+pmWarnRecord.getProvinceName()+"',";// 省名称
 			sql +=pmWarnRecord.getCityName()==null?"'',": "'"+pmWarnRecord.getCityName()+"',";// 城市名称
 			sql +=pmWarnRecord.getEquipment_Code()==null?"'',": "'"+pmWarnRecord.getEquipment_Code()+"',";// 设备编号
-			sql +=pmWarnRecord.getSend_State()==null?0: pmWarnRecord.getSend_State()+",";// 发送状态 
+			sql +=pmWarnRecord.getSend_State()==null?0: pmWarnRecord.getSend_State()+",";// 发送状态
 			sql +=pmWarnRecord.getVoltage()==null?0+",": pmWarnRecord.getVoltage()+",";//电压
 			sql +=pmWarnRecord.getCircuit()==null?0+",": pmWarnRecord.getCircuit()+",";//电流
 			sql +=pmWarnRecord.getRecover_Way()==null?0:0;//恢复方式
@@ -562,18 +563,18 @@ public class ScadaWarnPushDao implements Serializable {
 			final String sqlStr = sql;
 //			System.out.println(sqlStr);
 		 	jdbcTemplateWarn.update(sqlStr);
-		 	
+
 		 	Integer Id =0;
 	    	StringBuffer sb= new StringBuffer();
 	    	sb.append(" select max(WARN_RECORD_ID) as Id  from PM_WARN_RECORD  ");
 		    //System.out.println(sb.toString());
-		    Id = jdbcTemplateWarn.query(sb.toString(), new ResultSetExtractor<Integer>() { 
-		    public Integer extractData(ResultSet rs)  throws SQLException, DataAccessException { 
+		    Id = jdbcTemplateWarn.query(sb.toString(), new ResultSetExtractor<Integer>() {
+		    public Integer extractData(ResultSet rs)  throws SQLException, DataAccessException {
 		    	Integer result =0;
-				 while(rs.next()) {  
+				 while(rs.next()) {
 					 result = rs.getInt("Id");
 				 }
-				 return result;  
+				 return result;
 		     }});
 		    pmWarnRecord.setWarn_Record_Id(Id);
 		} catch (Exception e) {
@@ -581,13 +582,13 @@ public class ScadaWarnPushDao implements Serializable {
 		}
 		return pmWarnRecord;
 	}
-	
-	
+
+
 	/***
 	 * 更新数据库告警结束时间
 	 * @param warnRecordId
 	 * @param nowDate
-	 * @return 
+	 * @return
 	 */
 	public void updateWarnRecord(Integer warnRecordId , String nowDate)
 	{
@@ -597,7 +598,7 @@ public class ScadaWarnPushDao implements Serializable {
 			sql = "update pm_warn_record set occur_recover = str_to_date('"+nowDate+"','%Y-%m-%d %H:%i:%s'), warn_status = 5, recover_Way = '"+recoverWay+"', SEND_STATE = 2 where warn_record_id = '"+warnRecordId+"'";
 			final String sqlStr = sql;
 //			System.out.println(sqlStr);
-		 	jdbcTemplateWarn.update(sqlStr); 
+		 	jdbcTemplateWarn.update(sqlStr);
 		} catch (Exception e) {
 			System.out.println("InsertWarnRecord()异常:" + e.toString());
 		}
@@ -605,37 +606,37 @@ public class ScadaWarnPushDao implements Serializable {
 
 
 	/***
-	 * 插入警告信息 
+	 * 插入警告信息
 	 * @param pmWarnRecord
-	 * @return 
+	 * @return
 	 */
-	
+
 	public PmWarnRecord InsertAnalyzeEvent(PmWarnRecord pmWarnRecord)
 	{
-		SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");  
-		String sql=""; 
+		SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		String sql="";
 		try {
 			sql ="INSERT INTO pm_analyze_event (WARN_RECORD_ID,EVENT_STATE,EQUIPMENT_ID,ASSET_ID,REAL_WARN_ID,WARN_NAME,WARN_SET_ID,WARN_LEVEL" +
 					",WARN_TYPE,STATION_ID,OCCUR_TIME,OCCUR_RECOVER,WARN_STATUS,STATION_NAME,EQUIPMENT_NAME,WARN_SOURCE,PROVINCENAME,CITYNAME" +
 					",EQUIPMENT_CODE,SEND_STATE,VOLTAGE,CIRCUIT,RECOVER_WAY) VALUES(NULL,1,";
 			sql +=pmWarnRecord.getEquipment_Id()==null?0+",": pmWarnRecord.getEquipment_Id()+",";//设备ID
 			sql +=pmWarnRecord.getAsset_Id()==null?0+",": pmWarnRecord.getAsset_Id()+",";// 资产ID
-			sql +=pmWarnRecord.getReal_Warn_Id()==null?0+",": pmWarnRecord.getReal_Warn_Id()+",";// 
-			sql +=pmWarnRecord.getWarn_Name()==null?"'',": "'"+pmWarnRecord.getWarn_Name()+"',";// 
-			sql +=pmWarnRecord.getWarn_Set_Id()==null?0+",": pmWarnRecord.getWarn_Set_Id()+",";// 
-			sql +=pmWarnRecord.getWarn_Level()==null?0+",": pmWarnRecord.getWarn_Level()+",";// 
-			sql +=pmWarnRecord.getWarn_Type()==null?0+",": pmWarnRecord.getWarn_Type()+",";// 
-			sql +=pmWarnRecord.getStation_Id()==null?0+",": pmWarnRecord.getStation_Id()+",";// 
-			sql +=pmWarnRecord.getOccur_Time()==null?"str_to_date('2016-10-24 01:01:01','%Y-%m-%d %H:%i:%s'),": "str_to_date('"+sdf.format(pmWarnRecord.getOccur_Time())+"','%Y-%m-%d %H:%i:%s'),";// 
-			sql +=pmWarnRecord.getOccur_Recover()==null?"NULL,": "str_to_date('"+sdf.format(pmWarnRecord.getOccur_Recover())+"','%Y-%m-%d %H:%i:%s'),";// 
-			sql +=pmWarnRecord.getWarn_Status()==null?0: pmWarnRecord.getWarn_Status()+",";// 
+			sql +=pmWarnRecord.getReal_Warn_Id()==null?0+",": pmWarnRecord.getReal_Warn_Id()+",";//
+			sql +=pmWarnRecord.getWarn_Name()==null?"'',": "'"+pmWarnRecord.getWarn_Name()+"',";//
+			sql +=pmWarnRecord.getWarn_Set_Id()==null?0+",": pmWarnRecord.getWarn_Set_Id()+",";//
+			sql +=pmWarnRecord.getWarn_Level()==null?0+",": pmWarnRecord.getWarn_Level()+",";//
+			sql +=pmWarnRecord.getWarn_Type()==null?0+",": pmWarnRecord.getWarn_Type()+",";//
+			sql +=pmWarnRecord.getStation_Id()==null?0+",": pmWarnRecord.getStation_Id()+",";//
+			sql +=pmWarnRecord.getOccur_Time()==null?"str_to_date('2016-10-24 01:01:01','%Y-%m-%d %H:%i:%s'),": "str_to_date('"+sdf.format(pmWarnRecord.getOccur_Time())+"','%Y-%m-%d %H:%i:%s'),";//
+			sql +=pmWarnRecord.getOccur_Recover()==null?"NULL,": "str_to_date('"+sdf.format(pmWarnRecord.getOccur_Recover())+"','%Y-%m-%d %H:%i:%s'),";//
+			sql +=pmWarnRecord.getWarn_Status()==null?0: pmWarnRecord.getWarn_Status()+",";//
 			sql +=pmWarnRecord.getStation_Name()==null?"'',": "'"+pmWarnRecord.getStation_Name()+"',";// 电站名称
 			sql +=pmWarnRecord.getEquipment_Name()==null?"'',": "'"+pmWarnRecord.getEquipment_Name()+"',";// 设备名称
-			sql +=pmWarnRecord.getWarn_Source()==null?0+",": pmWarnRecord.getWarn_Source()+",";// 告警来源 
+			sql +=pmWarnRecord.getWarn_Source()==null?0+",": pmWarnRecord.getWarn_Source()+",";// 告警来源
 			sql +=pmWarnRecord.getProvinceName()==null?"'',": "'"+pmWarnRecord.getProvinceName()+"',";// 省名称
 			sql +=pmWarnRecord.getCityName()==null?"'',": "'"+pmWarnRecord.getCityName()+"',";// 城市名称
 			sql +=pmWarnRecord.getEquipment_Code()==null?"'',": "'"+pmWarnRecord.getEquipment_Code()+"',";// 设备编号
-			sql +=pmWarnRecord.getSend_State()==null?0: pmWarnRecord.getSend_State()+",";// 发送状态 
+			sql +=pmWarnRecord.getSend_State()==null?0: pmWarnRecord.getSend_State()+",";// 发送状态
 			sql +=pmWarnRecord.getVoltage()==null?0+",": pmWarnRecord.getVoltage()+",";//电压
 			sql +=pmWarnRecord.getCircuit()==null?0+",": pmWarnRecord.getCircuit()+",";//电流
 			sql +=pmWarnRecord.getRecover_Way()==null?0:0;//恢复方式

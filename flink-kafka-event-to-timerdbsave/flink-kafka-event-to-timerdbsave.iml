@@ -2,7 +2,16 @@
 <module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="Spring" name="Spring">
-      <configuration />
+      <configuration>
+        <fileset id="fileset" name="Spring Application Context" removed="false">
+          <file>file://$MODULE_DIR$/src/main/resources/applicationContext.xml</file>
+          <file>file://$MODULE_DIR$/src/main/java/cn/zup/iot/timerdbsave/TimerdbsaveApplication.java</file>
+          <file>jar://$MODULE_DIR$/../../../resource/local/org/apache/flink/flink-runtime_2.11/1.11.1/flink-runtime_2.11-1.11.1.jar!/org/apache/flink/shaded/akka/org/jboss/netty/container/spring/beans.xml</file>
+          <file>file://$MODULE_DIR$/../../../resource/local/org/apache/flink/flink-runtime_2.11/1.11.1/flink-runtime_2.11-1.11.1.jar</file>
+          <file>jar://$MODULE_DIR$/../../../resource/local/org/apache/flink/flink-runtime_2.12/1.11.1/flink-runtime_2.12-1.11.1.jar!/org/apache/flink/shaded/akka/org/jboss/netty/container/spring/beans.xml</file>
+          <file>file://$MODULE_DIR$/../../../resource/local/org/apache/flink/flink-runtime_2.12/1.11.1/flink-runtime_2.12-1.11.1.jar</file>
+        </fileset>
+      </configuration>
     </facet>
   </component>
   <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8">
