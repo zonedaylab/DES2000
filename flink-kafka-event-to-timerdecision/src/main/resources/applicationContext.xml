@@ -19,89 +19,89 @@
 
 
 	<!-- 开启IOC注解扫描 -->
-	<context:component-scan base-package="cn.zup.iot.timerdecision" />
+<!--	<context:component-scan base-package="cn.zup.iot.timerdecision" />-->
 
-	<context:property-placeholder location="classpath:application.yml"/>
-
-
-
-	<!-- 数据库配置开始 -->
-    <!--destroy-method=”close”的作用是当数据库连接不使用的时候,就把该连接重新放到数据池中,方便下次使用调用-->
-	<bean id="dataSource_mc" class="com.alibaba.druid.pool.DruidDataSource" destroy-method="close">
-		<property name="driverClassName" value="${spring.ms.driverClassName}"></property>
-		<property name="url" value="${spring.ms.url}"></property>
-        <property name="username" value="${spring.ms.username}"></property>
-		<property name="password" value="${spring.ms.passwd}"></property>
-		<property name="maxActive" value="${spring.ms.maxActive}"></property>
-		<property name="initialSize" value="${spring.ms.initialSize}"></property>
-        <property name="minIdle" value="${spring.ms.minIdle}"></property>
-        <property name="maxWait" value="${spring.ms.maxWait}"></property>
-        <property name="defaultAutoCommit" value="true"></property>
-    </bean>
-    <bean id="bpmdataSource_mc" class="com.alibaba.druid.pool.DruidDataSource" destroy-method="close">
-		<property name="driverClassName" value="${spring.pms.driverClassName}"></property>
-		<property name="url" value="${spring.pms.url}"></property>
-		<property name="username" value="${spring.pms.username}"></property>
-		<property name="password" value="${spring.pms.passwd}"></property>
-		<property name="maxActive" value="${spring.pms.maxActive}"></property>
-		<property name="initialSize" value="${spring.pms.initialSize}"></property>
-		<property name="minIdle" value="${spring.pms.minIdle}"></property>
-		<property name="maxWait" value="${spring.pms.maxWait}"></property>
-		<property name="defaultAutoCommit" value="true"></property>
-	</bean>
+<!--	<context:property-placeholder location="classpath:application.yml"/>-->
 
 
-	<!-- 配置Jdbc模板  -->
-	<bean id="jdbcTemplate_mc" class="org.springframework.jdbc.core.JdbcTemplate"
-		  p:dataSource-ref="dataSource_mc" />
-	<bean id="bpmJdbcTemplate_mc" class="org.springframework.jdbc.core.JdbcTemplate"
-		  p:dataSource-ref="bpmdataSource_mc" />
 
-	<!-- 配置事务管理器 -->
-	<bean id="transactionManager_mc"
-		class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
-		p:dataSource-ref="dataSource_mc" />
-	<bean id="bpmtransactionManager_mc"
-		  class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
-		  p:dataSource-ref="bpmdataSource_mc" />
+<!--	&lt;!&ndash; 数据库配置开始 &ndash;&gt;-->
+<!--    &lt;!&ndash;destroy-method=”close”的作用是当数据库连接不使用的时候,就把该连接重新放到数据池中,方便下次使用调用&ndash;&gt;-->
+<!--	<bean id="dataSource_mc" class="com.alibaba.druid.pool.DruidDataSource" destroy-method="close">-->
+<!--		<property name="driverClassName" value="${spring.ms.driverClassName}"></property>-->
+<!--		<property name="url" value="${spring.ms.url}"></property>-->
+<!--        <property name="username" value="${spring.ms.username}"></property>-->
+<!--		<property name="password" value="${spring.ms.passwd}"></property>-->
+<!--		<property name="maxActive" value="${spring.ms.maxActive}"></property>-->
+<!--		<property name="initialSize" value="${spring.ms.initialSize}"></property>-->
+<!--        <property name="minIdle" value="${spring.ms.minIdle}"></property>-->
+<!--        <property name="maxWait" value="${spring.ms.maxWait}"></property>-->
+<!--        <property name="defaultAutoCommit" value="true"></property>-->
+<!--    </bean>-->
+<!--    <bean id="bpmdataSource_mc" class="com.alibaba.druid.pool.DruidDataSource" destroy-method="close">-->
+<!--		<property name="driverClassName" value="${spring.pms.driverClassName}"></property>-->
+<!--		<property name="url" value="${spring.pms.url}"></property>-->
+<!--		<property name="username" value="${spring.pms.username}"></property>-->
+<!--		<property name="password" value="${spring.pms.passwd}"></property>-->
+<!--		<property name="maxActive" value="${spring.pms.maxActive}"></property>-->
+<!--		<property name="initialSize" value="${spring.pms.initialSize}"></property>-->
+<!--		<property name="minIdle" value="${spring.pms.minIdle}"></property>-->
+<!--		<property name="maxWait" value="${spring.pms.maxWait}"></property>-->
+<!--		<property name="defaultAutoCommit" value="true"></property>-->
+<!--	</bean>-->
 
-	<!-- 配置注入相关文件 -->
-	<bean id="deviceDao" class="cn.zup.iot.timerdecision.dao.DeviceDao">
-		<property name="jdbcTemplate">
-			<ref bean="jdbcTemplate_mc"/>
-		</property>
-	</bean>
-	<!-- 配置注入hisDataDao相关文件 -->
-	<bean id="hisDataDao" class="cn.zup.iot.timerdecision.dao.HisDataDao">
-		<property name="jdbcTemplateHis">
-			<ref bean="jdbcTemplate_mc"/>
-		</property>
-	</bean>
-	 <bean id="scadaWarnPushDao" class="cn.zup.iot.timerdecision.dao.ScadaWarnPushDao">
-		<property name="jdbcTemplateWarn">
-			<ref bean="bpmJdbcTemplate_mc"/>
-		</property>
-	</bean>
-	<bean id="decisionDao" class="cn.zup.iot.timerdecision.dao.DecisionDao">
-		<property name="jdbcTemplateDeci">
-			<ref bean="jdbcTemplate_mc"/>
-		</property>
-	</bean>
-	<bean id="diagnosisDao" class="cn.zup.iot.timerdecision.dao.DiagnosisDao">
-		<property name="jdbcTemplateDia">
-			<ref bean="bpmJdbcTemplate_mc"/>
-		</property>
-	</bean>
-	<bean id="initTreeDao" class="cn.zup.iot.timerdecision.dao.InitTreeDao">
-		<property name="jdbcTemplateInit">
-			<ref bean="bpmJdbcTemplate_mc"/>
-		</property>
-	</bean>
-	<bean id="scadaWarnPushService" class="cn.zup.iot.timerdecision.service.ScadaWarnPushService"></bean>
-	<bean id="decisionEngineService" class="cn.zup.iot.timerdecision.service.DecisionEngineService"></bean>
-	<bean id="activityNodeService" class="cn.zup.iot.timerdecision.service.ActivityNodeService"></bean>
-	<bean id="decisionService" class="cn.zup.iot.timerdecision.service.DecisionService"></bean>
-	<bean id="StrategyWarnEngineService" class="cn.zup.iot.timerdecision.service.StrategyWarnEngineService"></bean>
+
+<!--	&lt;!&ndash; 配置Jdbc模板  &ndash;&gt;-->
+<!--	<bean id="jdbcTemplate_mc" class="org.springframework.jdbc.core.JdbcTemplate"-->
+<!--		  p:dataSource-ref="dataSource_mc" />-->
+<!--	<bean id="bpmJdbcTemplate_mc" class="org.springframework.jdbc.core.JdbcTemplate"-->
+<!--		  p:dataSource-ref="bpmdataSource_mc" />-->
+
+<!--	&lt;!&ndash; 配置事务管理器 &ndash;&gt;-->
+<!--	<bean id="transactionManager_mc"-->
+<!--		class="org.springframework.jdbc.datasource.DataSourceTransactionManager"-->
+<!--		p:dataSource-ref="dataSource_mc" />-->
+<!--	<bean id="bpmtransactionManager_mc"-->
+<!--		  class="org.springframework.jdbc.datasource.DataSourceTransactionManager"-->
+<!--		  p:dataSource-ref="bpmdataSource_mc" />-->
+
+<!--	&lt;!&ndash; 配置注入相关文件 &ndash;&gt;-->
+<!--	<bean id="deviceDao" class="cn.zup.iot.timerdecision.dao.DeviceDao">-->
+<!--		<property name="jdbcTemplate">-->
+<!--			<ref bean="jdbcTemplate_mc"/>-->
+<!--		</property>-->
+<!--	</bean>-->
+<!--	&lt;!&ndash; 配置注入hisDataDao相关文件 &ndash;&gt;-->
+<!--	<bean id="hisDataDao" class="cn.zup.iot.timerdecision.dao.HisDataDao">-->
+<!--		<property name="jdbcTemplateHis">-->
+<!--			<ref bean="jdbcTemplate_mc"/>-->
+<!--		</property>-->
+<!--	</bean>-->
+<!--	 <bean id="scadaWarnPushDao" class="cn.zup.iot.timerdecision.dao.ScadaWarnPushDao">-->
+<!--		<property name="jdbcTemplateWarn">-->
+<!--			<ref bean="bpmJdbcTemplate_mc"/>-->
+<!--		</property>-->
+<!--	</bean>-->
+<!--	<bean id="decisionDao" class="cn.zup.iot.timerdecision.dao.DecisionDao">-->
+<!--		<property name="jdbcTemplateDeci">-->
+<!--			<ref bean="jdbcTemplate_mc"/>-->
+<!--		</property>-->
+<!--	</bean>-->
+<!--	<bean id="diagnosisDao" class="cn.zup.iot.timerdecision.dao.DiagnosisDao">-->
+<!--		<property name="jdbcTemplateDia">-->
+<!--			<ref bean="bpmJdbcTemplate_mc"/>-->
+<!--		</property>-->
+<!--	</bean>-->
+<!--	<bean id="initTreeDao" class="cn.zup.iot.timerdecision.dao.InitTreeDao">-->
+<!--		<property name="jdbcTemplateInit">-->
+<!--			<ref bean="bpmJdbcTemplate_mc"/>-->
+<!--		</property>-->
+<!--	</bean>-->
+<!--	<bean id="scadaWarnPushService" class="cn.zup.iot.timerdecision.service.ScadaWarnPushService"></bean>-->
+<!--	<bean id="decisionEngineService" class="cn.zup.iot.timerdecision.service.DecisionEngineService"></bean>-->
+<!--	<bean id="activityNodeService" class="cn.zup.iot.timerdecision.service.ActivityNodeService"></bean>-->
+<!--	<bean id="decisionService" class="cn.zup.iot.timerdecision.service.DecisionService"></bean>-->
+<!--	<bean id="StrategyWarnEngineService" class="cn.zup.iot.timerdecision.service.StrategyWarnEngineService"></bean>-->
 
 
 	

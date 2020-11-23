@@ -51,20 +51,18 @@ import javax.annotation.Resource;
 /*
  * 类的功能：历史数据查询
  * */
-
-
 @Component
 public class HisDataDao implements Serializable {
-	private JdbcTemplate jdbcTemplateHis;
+	private JdbcTemplate jdbcTemplateHis= new JdbcTemplate((new DataSourceUtils()).getDataSource1());
 	private String iesbase = "";
 	
 //	public JdbcTemplate getJdbcTemplateHis() {
 //		return jdbcTemplateHis;
 //	}
 //
-	public void setJdbcTemplateHis(JdbcTemplate jdbcTemplateHis) {
-		this.jdbcTemplateHis = jdbcTemplateHis;
-	}
+//	public void setJdbcTemplateHis(JdbcTemplate jdbcTemplateHis) {
+//		this.jdbcTemplateHis = jdbcTemplateHis;
+//	}
 	
 	private static final String hourStr = "21"; //小时参数默认一天的电量查询为21点数据
 	private static final int minuteParam = 300000; //小时参数默认一天的电量查询为21点数据

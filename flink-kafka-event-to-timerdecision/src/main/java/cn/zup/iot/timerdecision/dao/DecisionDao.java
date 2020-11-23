@@ -45,15 +45,15 @@ public class DecisionDao implements Serializable {
 	//需要显示的电站状态
 	private String stationStat = "4"; //代表已监控电站
 
-	private JdbcTemplate jdbcTemplateDeci;
+	private JdbcTemplate jdbcTemplateDeci = new JdbcTemplate((new DataSourceUtils()).getDataSource1());
 
 //	public JdbcTemplate getjdbcTemplateDeci() {
 //		return jdbcTemplateDeci;
 //	}
 //
-	public void setJdbcTemplateDeci(JdbcTemplate jdbcTemplateDeci) {
-		this.jdbcTemplateDeci = jdbcTemplateDeci;
-	}
+//	public void setJdbcTemplateDeci(JdbcTemplate jdbcTemplateDeci) {
+//		this.jdbcTemplateDeci = jdbcTemplateDeci;
+//	}
 	/**
 	 * 获取电站状态 主要是告警信息 
 	 * @param stationId

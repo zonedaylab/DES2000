@@ -1,11 +1,13 @@
 package cn.zup.iot.timerdecision.util;
 
 import com.alibaba.druid.pool.DruidDataSource;
+import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
 
 public class DataSourceUtils {
-    public  static DataSource getDataSource1(){
+    public    DataSource getDataSource1(){
+        //jdbcTemplate_mc
         DruidDataSource dataSource1 = new DruidDataSource();
         dataSource1.setUrl("jdbc:mysql://localhost:3306/ms?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=UTC");
         dataSource1.setUsername("root");
@@ -25,7 +27,8 @@ public class DataSourceUtils {
         dataSource1.setMaxPoolPreparedStatementPerConnectionSize(20);
         return dataSource1;
     };
-    public  static DataSource getDataSource2(){
+    public DataSource getDataSource2(){
+        //bpmJdbcTemplate_mc
         DruidDataSource dataSource2 = new DruidDataSource();
         dataSource2.setUrl("jdbc:mysql://localhost:3306/pms?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=UTC");
         dataSource2.setUsername("root");

@@ -40,15 +40,15 @@ import javax.annotation.Resource;
  */
 @Component
 public class DiagnosisDao implements Serializable {
-	private JdbcTemplate jdbcTemplateDia;
-	
+	private JdbcTemplate jdbcTemplateDia= new JdbcTemplate((new DataSourceUtils()).getDataSource2());
+
 //	public JdbcTemplate getJdbcTemplateDia() {
 //		return jdbcTemplateDia;
 //	}
 //
-	public void setJdbcTemplateDia(JdbcTemplate jdbcTemplateDia) {
-		this.jdbcTemplateDia = jdbcTemplateDia;
-	}
+//	public void setJdbcTemplateDia(JdbcTemplate jdbcTemplateDia) {
+//		this.jdbcTemplateDia = jdbcTemplateDia;
+//	}
 
 	/**
 	 * 根据电站id获取所在分组下所有电站信息 

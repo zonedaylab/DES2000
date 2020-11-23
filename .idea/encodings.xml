@@ -2,8 +2,8 @@
 <project version="4">
   <component name="Encoding">
     <file url="file://$PROJECT_DIR$/flink-common/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/flink-kafka-event-to-basedate/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/flink-kafka-event-to-basedate/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/flink-kafka-event-to-basedata/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/flink-kafka-event-to-basedata/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/flink-kafka-event-to-cleandata/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/flink-kafka-event-to-cleandata/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/flink-kafka-event-to-timerRedis/src/main/java" charset="UTF-8" />

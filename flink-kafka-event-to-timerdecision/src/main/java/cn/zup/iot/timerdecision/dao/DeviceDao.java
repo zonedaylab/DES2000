@@ -36,18 +36,17 @@ import cn.zup.iot.timerdecision.service.settings.RegionType;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-
 @Component
 public class DeviceDao implements Serializable {
-	private JdbcTemplate jdbcTemplate;
+	private JdbcTemplate jdbcTemplate= new JdbcTemplate((new DataSourceUtils()).getDataSource1());
 
 //	public JdbcTemplate getJdbcTemplate() {
 //		return jdbcTemplate;
 //	}
 //
-	public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
-		this.jdbcTemplate = jdbcTemplate;
-	}
+//	public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
+//		this.jdbcTemplate = jdbcTemplate;
+//	}
 	/**
      * 获取遥信数据
      * @param id

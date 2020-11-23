@@ -35,19 +35,18 @@ import cn.zup.iot.timerdecision.service.settings.WarnSource;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-
 @Component
 public class ScadaWarnPushDao implements Serializable {
   
-	private JdbcTemplate jdbcTemplateWarn;
+	private JdbcTemplate jdbcTemplateWarn = new JdbcTemplate((new DataSourceUtils()).getDataSource2());
 
 //	public JdbcTemplate getJdbcTemplateWarn() {
 //		return jdbcTemplateWarn;
 //	}
 //
-	public void setJdbcTemplateWarn(JdbcTemplate jdbcTemplateWarn) {
-		this.jdbcTemplateWarn = jdbcTemplateWarn;
-	}
+//	public void setJdbcTemplateWarn(JdbcTemplate jdbcTemplateWarn) {
+//		this.jdbcTemplateWarn = jdbcTemplateWarn;
+//	}
 
 	/***
 	 * 获取告警更新信息

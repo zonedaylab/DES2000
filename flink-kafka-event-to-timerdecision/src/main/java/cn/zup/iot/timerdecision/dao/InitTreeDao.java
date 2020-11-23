@@ -17,15 +17,16 @@ import java.util.HashMap;
 
 @Component
 public class InitTreeDao implements Serializable {
-    private JdbcTemplate jdbcTemplateInit;
+
+    private JdbcTemplate jdbcTemplateInit = new JdbcTemplate((new DataSourceUtils()).getDataSource2());
 
 //    public JdbcTemplate getJdbcTemplateInit() {
 //        return jdbcTemplateInit;
 //    }
 //
-    public void setJdbcTemplateInit(JdbcTemplate jdbcTemplateInit) {
-        this.jdbcTemplateInit = jdbcTemplateInit;
-    }
+//    public void setJdbcTemplateInit(JdbcTemplate jdbcTemplateInit) {
+//        this.jdbcTemplateInit = jdbcTemplateInit;
+//    }
 
     public HashMap<Integer, ActivityNode>  getTree(int treeId){
         HashMap<Integer, ActivityNode> listAOV = new HashMap<Integer, ActivityNode>();

@@ -6,7 +6,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.context.annotation.ImportResource;
 
-@ImportResource(locations = "classpath:applicationContext.xml")
 @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
 public class TimerDecisionApplication {
 

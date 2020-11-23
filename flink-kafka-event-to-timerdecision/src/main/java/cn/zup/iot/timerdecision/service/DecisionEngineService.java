@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 public class DecisionEngineService implements Serializable{
 
 	@Autowired
-	InitTreeDao initTreeDao;
+	private InitTreeDao initTreeDao;
 
 	@Autowired
 	private ActivityNodeService activityNodeService;
