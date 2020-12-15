@@ -3,8 +3,8 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <groupId>cn.zup.iot</groupId>
         <artifactId>DES2000</artifactId>
+        <groupId>cn.zup.iot</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -19,11 +19,11 @@
             <version>8.0.21</version>
         </dependency>
 
-<!--        <dependency>-->
-<!--		  <groupId>org.apache.flink</groupId>-->
-<!--		  <artifactId>flink-connector-jdbc_${scala.binary.version}</artifactId>-->
-<!--		  <version>1.12-SNAPSHOT</version>-->
-<!--		</dependency>-->
+        <!--        <dependency>-->
+        <!--		  <groupId>org.apache.flink</groupId>-->
+        <!--		  <artifactId>flink-connector-jdbc_${scala.binary.version}</artifactId>-->
+        <!--		  <version>1.12-SNAPSHOT</version>-->
+        <!--		</dependency>-->
 
         <dependency>
             <groupId>cn.zup.iot</groupId>
@@ -36,8 +36,19 @@
             <version>1.2.47</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid</artifactId>
+            <version>1.1.10</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>1.2.47</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <!-- We use the maven-shade plugin to create a fat jar that contains all necessary dependencies. -->
@@ -76,7 +87,7 @@
                             </filters>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>FlinkKafkaWindowsMysql</mainClass>
+                                    <mainClass>cn.zup.iot.basedata.FlinkKafkaToBaseData</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
@@ -85,5 +96,6 @@
             </plugin>
         </plugins>
     </build>
+
 
 </project>

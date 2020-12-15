@@ -10,22 +10,6 @@
  *********************************************************************/
 package cn.zup.iot.timerdecision.dao;
 
-import java.io.Serializable;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.TimeZone;
-
-import cn.zup.iot.timerdecision.util.DataSourceUtils;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-
 import cn.zup.iot.timerdecision.model.Commdev;
 import cn.zup.iot.timerdecision.model.PmWarnRecord;
 import cn.zup.iot.timerdecision.model.StationInfo;
@@ -33,12 +17,18 @@ import cn.zup.iot.timerdecision.model.YXData;
 import cn.zup.iot.timerdecision.service.settings.BJLX;
 import cn.zup.iot.timerdecision.service.settings.HuaWeiSunParam;
 import cn.zup.iot.timerdecision.service.settings.RegionType;
-import org.springframework.stereotype.Component;
+import cn.zup.iot.timerdecision.util.JdbcTemplateUtils;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 
-import javax.annotation.Resource;
-@Component
-public class DeviceDao implements Serializable {
-	private JdbcTemplate jdbcTemplate= new JdbcTemplate((new DataSourceUtils()).getDataSource1());
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+public class DeviceDao{
+	private JdbcTemplate jdbcTemplate= JdbcTemplateUtils.jdbcTemplateMs;
 
 //	public JdbcTemplate getJdbcTemplate() {
 //		return jdbcTemplate;

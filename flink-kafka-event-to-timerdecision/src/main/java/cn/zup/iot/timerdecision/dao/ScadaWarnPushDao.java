@@ -9,16 +9,11 @@
  *********************************************************************/
 package cn.zup.iot.timerdecision.dao;
 
-import java.io.Serializable;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
-
-import cn.zup.iot.timerdecision.util.DataSourceUtils;
+import cn.zup.iot.timerdecision.model.PmWarnRecord;
+import cn.zup.iot.timerdecision.model.YXData;
+import cn.zup.iot.timerdecision.service.settings.WarnLevel;
+import cn.zup.iot.timerdecision.service.settings.WarnSource;
+import cn.zup.iot.timerdecision.util.JdbcTemplateUtils;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
@@ -27,18 +22,17 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 
-import cn.zup.iot.timerdecision.model.PmWarnRecord;
-import cn.zup.iot.timerdecision.model.YXData;
-import cn.zup.iot.timerdecision.service.settings.StationChannelId;
-import cn.zup.iot.timerdecision.service.settings.WarnLevel;
-import cn.zup.iot.timerdecision.service.settings.WarnSource;
-import org.springframework.stereotype.Component;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 
-import javax.annotation.Resource;
-@Component
-public class ScadaWarnPushDao implements Serializable {
+public class ScadaWarnPushDao{
   
-	private JdbcTemplate jdbcTemplateWarn = new JdbcTemplate((new DataSourceUtils()).getDataSource2());
+	private JdbcTemplate jdbcTemplateWarn = JdbcTemplateUtils.jdbcTemplatePms;
 
 //	public JdbcTemplate getJdbcTemplateWarn() {
 //		return jdbcTemplateWarn;

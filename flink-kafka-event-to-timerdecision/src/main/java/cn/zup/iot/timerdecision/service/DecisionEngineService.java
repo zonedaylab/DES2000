@@ -1,47 +1,26 @@
 package cn.zup.iot.timerdecision.service;
 
-import java.io.Serializable;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
-
 import cn.zup.iot.timerdecision.dao.*;
 import cn.zup.iot.timerdecision.model.*;
 import cn.zup.iot.timerdecision.service.settings.BJLX;
 import cn.zup.iot.timerdecision.service.settings.StationChannelId;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
-@Component
-public class DecisionEngineService implements Serializable{
+import java.text.SimpleDateFormat;
+import java.util.*;
 
-	@Autowired
-	private InitTreeDao initTreeDao;
+public class DecisionEngineService{ private InitTreeDao initTreeDao = new InitTreeDao();
 
-	@Autowired
-	private ActivityNodeService activityNodeService;
+	private ActivityNodeService activityNodeService = new ActivityNodeService();
 
-	@Autowired
-	private DecisionDao decisionDao;
+	private DecisionDao decisionDao = new DecisionDao();
 
-	@Autowired
-	private DiagnosisDao diagnosisDao;
+	private DiagnosisDao diagnosisDao = new DiagnosisDao();
 
-	@Autowired
-	private HisDataDao hisDataDao;
+	private HisDataDao hisDataDao = new HisDataDao();
 
-	@Autowired
-	private DeviceDao deviceDao;
+	private DeviceDao deviceDao = new DeviceDao();
 
-	@Autowired
-	private ScadaWarnPushDao scadaWarnPushDao;
+	private ScadaWarnPushDao scadaWarnPushDao = new ScadaWarnPushDao();
 
 
 
@@ -54,13 +33,13 @@ public class DecisionEngineService implements Serializable{
 		int i;
 		java.util.Stack<ActivityNode> stackNodesZeroInEdges = new java.util.Stack<ActivityNode>();
 		java.util.Stack<ActivityNode> stackNodesZeroInEdgesTmp = new java.util.Stack<ActivityNode>();
-		java.util.ArrayList<ActivityNode> listOut = new java.util.ArrayList<ActivityNode>(); //输出队列
+		ArrayList<ActivityNode> listOut = new ArrayList<ActivityNode>(); //输出队列
 		StringBuilder strMsg = new StringBuilder();
 		strMsg.append(String.format("决策流程ID[%1$s],拓扑序列[",(new Integer(this.m_nFlowID)).toString()));
 		try
 		{
 			//循环检测邻接表入度为0的活动，并将其压栈，同期入栈中的为并行活动
-			for (java.util.Map.Entry<Integer, ActivityNode> item : listAOV.entrySet())
+			for (Map.Entry<Integer, ActivityNode> item : listAOV.entrySet())
 			{
 				//每个节点的入边都是一个
 				if (item.getValue().getInEdges() == 0)
@@ -74,17 +53,19 @@ public class DecisionEngineService implements Serializable{
 				{
 					//取出元素，每次只取出一个结点
 					ActivityNode node = stackNodesZeroInEdges.pop(); //栈顶元素出栈
-					System.out.println(node.getnActivityCode());
 					//目的是activityNodeService也能对node的属性进行改变
 					activityNodeService.node = node;
+					System.out.println("准备进入的节点码为"+node.getnActivityCode());
 					//listAOV是这个树的架构，device是含有设备id和设备名称，这样如果有错，也知道哪里错了
 					activityNodeService.ChangeActivityProperty(listAOV, device);
 					listOut.add(node); //将栈顶元素放入拓扑序列数组中，同时也表示了已经进入拓扑序列中的元素个数
+					System.out.println("已经进入的节点码为"+node.getnActivityCode());
 					if (node.getStrNextActivityCodes().length() == 0)
 					{
 						continue;
 					}
 					String[] nextAllBraches = node.getStrNextActivityCodes().split("[,]", -1);
+//					System.out.println("子节点的值"+nextAllBraches[0]+nextAllBraches[1]);
 					for (String branch : nextAllBraches)
 					{
 						ActivityNode childNode = listAOV.get(Integer.parseInt(branch));
@@ -114,6 +95,7 @@ public class DecisionEngineService implements Serializable{
 			Integer treeId= 0;
 			boolean warnFlag = false;
 			int warnSourceId = 0;
+			System.out.println(listAOV.size());
 			if (listOut.size() == listAOV.size()) //当拓扑序列中的元素个数为总元素个数，则拓扑排序成功并输入序列
 			{
 				for (i = 0; i < listOut.size(); i++)
@@ -126,13 +108,14 @@ public class DecisionEngineService implements Serializable{
 					//finish 节点 ，died 节点  					
 				}
 				strMsg.append("]");
-
+				System.out.println("全部节点顺序"+strMsg);
 				//输出决策结果
 				for (i = 0; i < listOut.size(); i++)
 				{
 					ActivityNode  node=listOut.get(i);
 					if(node.getByActivityNodeType()!="FINISHED")
 						continue;
+//					System.out.println("node.getMessage()="+node.getMessage());
 					if(node.getMessage()!=null && !node.getMessage().equals(""))
 					{
 						strResultCode.append(node.getnActivityCode());
@@ -152,6 +135,7 @@ public class DecisionEngineService implements Serializable{
 //						strResult.append("-->");
 //					}								
 				}
+				System.out.println("警告："+strResult);
 //				strResult.append("]");					
 			}
 			else
@@ -180,7 +164,7 @@ public class DecisionEngineService implements Serializable{
 				SaveDiagnosis(device,strResult.toString(),strResultCode.toString(), treeId);
 				//推送告警标记
 				boolean warntrueflag = true;
-				//手动推送告警信息获取
+				//手动推送告警信息获取，判断告警是否存在，如果库里存在就不再推送
 				List<PmWarnRecord> warnList = scadaWarnPushDao.GetWarntrueflagList(device.getId(),device.getId());
 				if(warnList.size()>0){//手动推送告警存在
 					warntrueflag = false;
@@ -195,7 +179,7 @@ public class DecisionEngineService implements Serializable{
 						//保存基于设备的告警记录
 						//基于电站的告警推送
 						//AddWarnRecord(device,strResult.toString(),strResultCode.toString(),warnSourceId, treeId);
-						//基于设备的告警推送
+						//基于设备的告警推送，基于wanSourceId
 						AddDeviceWarnRecord(device,strResult.toString(),strResultCode.toString(),warnSourceId, treeId);
 					}
 				}
@@ -204,8 +188,6 @@ public class DecisionEngineService implements Serializable{
 				//推送告警标记
 				boolean warntrueflag = false;
 				//手动推送告警信息获取
-				scadaWarnPushDao = new ScadaWarnPushDao();
-				deviceDao = new DeviceDao();
 				List<PmWarnRecord> warnList = scadaWarnPushDao.GetWarntrueflagList(device.getId(),device.getId());
 				if(warnList.size()>0){//手动推送告警存在
 					warntrueflag = true;
@@ -245,7 +227,6 @@ public class DecisionEngineService implements Serializable{
 			//广度遍历，对刚初始化的这棵树进行遍历
 			System.out.println("广度遍历");
 			BFS(item);
-			System.out.println(counts++);
 		}
 		//UpdateWarnRecord(treeId);
 	}
@@ -346,8 +327,8 @@ public class DecisionEngineService implements Serializable{
 		YXData yx = new YXData();
 		yx.setBuJianCanShu(StationChannelId.CHANNEL_ID.getValue());
 		yx.setBuJianId(0);
-		PmWarnRecord warnRecord = diagnosisDao.GetDeviceWarnRecordFlag(strResultCode.toString(),device.getId(),warnSourceId, BJLX.yuanshendianbiao.getValue());
-		List<DeviceInfo> deviceInfoList = decisionDao.getDeviceInfo(device.getId(),6,54);
+		PmWarnRecord warnRecord = diagnosisDao.GetDeviceWarnRecordFlag(strResultCode.toString(),device.getId(),warnSourceId, BJLX.huaweinibianqi.getValue());
+		List<DeviceInfo> deviceInfoList = decisionDao.getDeviceInfo(device.getId(),6,BJLX.huaweinibianqi.getValue());
 
 		if(warnRecord!=null&&deviceInfoList != null&&deviceInfoList.size()>0 && warnRecord.getWarn_Record_Id()==0)
 		{
@@ -855,7 +836,10 @@ public class DecisionEngineService implements Serializable{
 		// ------------------ 结束执行 ---------------------------
 		System.out.println("getDecision end"+ today_hour+":"+today_minute+":"+today_sec);
 	}
-	public void allDeviceDecision()
+	/*
+	@timerType  时间信号
+	 */
+	public void allDeviceDecision(int timerType)
 	{ 	//获取当前的北京时间，“GMT+8”就是北京时间，
 		Calendar today = new GregorianCalendar(TimeZone.getTimeZone("GMT+8"));
 		//Calendar.getInstance();//创一个日期的实例，获取到日期的毫秒显示形式
@@ -865,25 +849,33 @@ public class DecisionEngineService implements Serializable{
 		int today_hour = today.get(Calendar.HOUR_OF_DAY);
 		// ------------------ 开始执行 ---------------------------
 		System.out.println("getDecision start"+ today_hour+":"+today_minute+":"+today_sec);
+		//从数据库中获取所有类型的树
+		List<DeviceParm> treeIdInfoList = initTreeDao.getTreeWarnInterval(timerType);
+		for(DeviceParm deviceParm:treeIdInfoList){
+			//先获取所有的设备信息;deviceId：设备ID、deviceType：设备类型、deviceType：区域类型。
+//			List<DeviceInfo> deviceInfoList = decisionDao.getDeviceInfo(deviceParm.getDeviceId(),deviceParm.getDeviceType(),deviceParm.getBujianType());
+			List<DeviceInfo> deviceInfoList = decisionDao.getYuanshenTest();
+			List<Device> deviceList = new ArrayList<Device>();
+			for(DeviceInfo item:deviceInfoList)
+			{
+				//if(item.getChangZhanID()==686){
 
-		//先获取所有的设备信息;deviceType：区域类型。
-		//		List<Changzhan> list = decisionDao.getContainer(0,0,0);
-		//获取设备id为0，设备类型为6，部件类型为54的所有的设备。4
-		List<DeviceInfo> deviceInfoList = decisionDao.getDeviceInfo(0,6,54);
-		List<Device> deviceList = new ArrayList<Device>();
-		for(DeviceInfo item:deviceInfoList)
-		{
-			//if(item.getChangZhanID()==686){
+				Device dev = new Device();
+				//新的list只存设备id和设备名字
+				dev.setId(item.getDeviceId());
+				dev.setName(item.getDeviceName());
+				deviceList.add(dev);
+			}
+//			DeviceInfo item = deviceInfoList.get(1);
+//			Device dev = new Device();
+//			dev.setId(item.getDeviceId());
+//			dev.setName(item.getDeviceName());
+//			deviceList.add(dev);
 
-			Device dev = new Device();
-			//新的list只存设备id和设备名字
-			dev.setId(item.getDeviceId());
-			dev.setName(item.getDeviceName());
-			deviceList.add(dev);
-			//			}
+			//1.最初决策树；2.****；3.电站数据维持不变推电站通讯关闭告警 By ZhangSC
+			BFSAll(deviceList,deviceParm.getTreeId());
 		}
-		//1.最初决策树；2.****；3.电站数据维持不变推电站通讯关闭告警 By ZhangSC
-		BFSAll(deviceList,1);
+
 
 		// ------------------ 结束执行 ---------------------------
 		System.out.println("getDecision end"+ today_hour+":"+today_minute+":"+today_sec);

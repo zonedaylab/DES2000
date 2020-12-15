@@ -1,46 +1,27 @@
 package cn.zup.iot.timerdecision.dao;
 
-import java.io.Serializable;
+import cn.zup.iot.timerdecision.model.PmDiagnosis;
+import cn.zup.iot.timerdecision.model.PmStationGroup;
+import cn.zup.iot.timerdecision.model.PmWarnRecord;
+import cn.zup.iot.timerdecision.model.WeatherInfo;
+import cn.zup.iot.timerdecision.service.settings.StationChannelId;
+import cn.zup.iot.timerdecision.util.JdbcTemplateUtils;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-import cn.zup.iot.timerdecision.util.CommonUtil;
-import cn.zup.iot.timerdecision.util.DataSourceUtils;
-import cn.zup.iot.timerdecision.util.farmat.MathUtil;
-import cn.zup.iot.timerdecision.model.Changzhan;
-import cn.zup.iot.timerdecision.model.DeviceInfo;
-import cn.zup.iot.timerdecision.model.HisDataTimeAndValue;
-import cn.zup.iot.timerdecision.model.PmDiagnosis;
-import cn.zup.iot.timerdecision.model.PmStationGroup;
-import cn.zup.iot.timerdecision.model.PmWarnRecord;
-import cn.zup.iot.timerdecision.model.PowerDayStat;
-import cn.zup.iot.timerdecision.model.PowerStatData;
-import cn.zup.iot.timerdecision.model.StationInfo;
-import cn.zup.iot.timerdecision.model.WeatherInfo;
-import cn.zup.iot.timerdecision.model.YCInfoData;
-import cn.zup.iot.timerdecision.model.YXData;
-import cn.zup.iot.timerdecision.service.settings.BJLX;
-import cn.zup.iot.timerdecision.service.settings.ChangZhanParam;
-import cn.zup.iot.timerdecision.service.settings.RegionType;
-import cn.zup.iot.timerdecision.service.settings.StationChannelId;
-
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.Resource;
-
 /***
  * 决策树接口
  * @author samson
  *
  */
-@Component
-public class DiagnosisDao implements Serializable {
-	private JdbcTemplate jdbcTemplateDia= new JdbcTemplate((new DataSourceUtils()).getDataSource2());
+public class DiagnosisDao{
+	private JdbcTemplate jdbcTemplateDia= JdbcTemplateUtils.jdbcTemplatePms;
 
 //	public JdbcTemplate getJdbcTemplateDia() {
 //		return jdbcTemplateDia;

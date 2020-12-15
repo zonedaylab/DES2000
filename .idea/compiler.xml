@@ -7,19 +7,21 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="flink-kafka-event-to-timercalc" />
-        <module name="flink-kafka-event-to-cleandata" />
-        <module name="flink-kafka-event-to-timerdecision" />
-        <module name="demo11" />
-        <module name="flink-kafka-event-to-timerdbsave" />
         <module name="flink-kafka-event-to-basedata" />
+        <module name="flink-kafka-event-to-timercalc" />
+        <module name="demo" />
         <module name="flink-common" />
-        <module name="flink-kafka-event-to-timerproducer" />
+        <module name="flink-kafka-event-to-timerdecision" />
         <module name="flink-kafka-event-to-redis" />
+        <module name="flink-kafka-event-to-timerproducer" />
+        <module name="flink-kafka-event-to-timerdbsave" />
+        <module name="flink-kafka-event-to-cleandata" />
+        <module name="demo11" />
         <module name="flink-kafka-event-to-timerRedis" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="basedata" target="1.8" />
       <module name="demo" target="1.8" />
       <module name="demo11" target="1.8" />
       <module name="DES2000" target="1.8" />
@@ -35,5 +37,10 @@
       <module name="flink-kafka-event-to-timerRedis" target="1.8" />
       <module name="link-kafka-event-to-timerdbsave" target="1.8" />
     </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="demo" options="-parameters" />
+    </option>
   </component>
 </project>

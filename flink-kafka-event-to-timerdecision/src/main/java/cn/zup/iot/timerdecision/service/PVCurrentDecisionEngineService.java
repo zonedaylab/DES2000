@@ -348,7 +348,7 @@ public class PVCurrentDecisionEngineService {
 
 	public boolean InitAOV(Integer treeId) {
 		listAOV.clear();
-		ActivityNode node;		
+		ActivityNode node;
 		//父节点流转规则
 		
 		//1.初始化父亲节点 判断电站状态  

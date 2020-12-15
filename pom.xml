@@ -36,7 +36,8 @@ under the License.
 		<module>flink-kafka-event-to-timerdbsave</module>
 		<module>flink-kafka-event-to-timerdecision</module>
 		<module>flink-kafka-event-to-timerproducer</module>
-    </modules>
+		<module>flink-kafka-event-to-basedat</module>
+	</modules>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -139,7 +140,13 @@ under the License.
 			<version>${log4j.version}</version>
 			<scope>runtime</scope>
 		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>cn.zup.iot</groupId>
+            <artifactId>flink-common</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
 
 	<build>
 		<plugins>

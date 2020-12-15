@@ -11,49 +11,35 @@
  *********************************************************************/
 package cn.zup.iot.timerdecision.dao;
 
-import java.io.*;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
-import java.util.Map.Entry;
-
 import cn.zup.iot.timerdecision.model.*;
-import cn.zup.iot.timerdecision.util.DataSourceUtils;
+import cn.zup.iot.timerdecision.service.StrategyWarnEngineService.s_warn_strategy;
+import cn.zup.iot.timerdecision.service.settings.BJLX;
+import cn.zup.iot.timerdecision.service.settings.ChangZhanParam;
+import cn.zup.iot.timerdecision.service.settings.InfoType;
+import cn.zup.iot.timerdecision.service.settings.RegionType;
+import cn.zup.iot.timerdecision.util.JdbcTemplateUtils;
+import cn.zup.iot.timerdecision.util.farmat.MathUtil;
+import cn.zup.iot.timerdecision.util.iESDate;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 
-import cn.zup.iot.timerdecision.util.iESDate;
-import cn.zup.iot.timerdecision.util.farmat.MathUtil;
-import cn.zup.iot.timerdecision.service.StrategyWarnEngineService.s_warn_strategy;
-import cn.zup.iot.timerdecision.service.settings.BJLX;
-import cn.zup.iot.timerdecision.service.settings.ChangZhanParam;
-import cn.zup.iot.timerdecision.service.settings.InfoType;
-import cn.zup.iot.timerdecision.service.settings.RegionType;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.Resource;
+import java.io.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Map.Entry;
 
 
 /*
  * 类的功能：历史数据查询
  * */
-@Component
-public class HisDataDao implements Serializable {
-	private JdbcTemplate jdbcTemplateHis= new JdbcTemplate((new DataSourceUtils()).getDataSource1());
+public class HisDataDao{
+	private JdbcTemplate jdbcTemplateHis= JdbcTemplateUtils.jdbcTemplatePms;
 	private String iesbase = "";
 	
 //	public JdbcTemplate getJdbcTemplateHis() {
@@ -555,7 +541,7 @@ public class HisDataDao implements Serializable {
 		}
 	}
 	
-	public List<StationInfo> getStationData(String StationName,String StationCode,String StationStat,Integer provinceId,Integer cityId,Integer changZhanId)
+	public List<StationInfo> getStationData(String StationName, String StationCode, String StationStat, Integer provinceId, Integer cityId, Integer changZhanId)
 	{
 		List<StationInfo> lists = new ArrayList<StationInfo>();		
 		String sqlString ; 
@@ -611,9 +597,9 @@ public class HisDataDao implements Serializable {
 	 * @param edDate 结束时间
 	 * @return
 	 */
-	public List<HisDataTimeAndValue> getRegionCumulativeHours(int regionType,int regionId, int BuJianType,int BuJianCanshu,Date stDate,Date edDate) {
+	public List<HisDataTimeAndValue> getRegionCumulativeHours(int regionType, int regionId, int BuJianType, int BuJianCanshu, Date stDate, Date edDate) {
 
-		 iESDate startDate=new iESDate(stDate);  
+		 iESDate startDate=new iESDate(stDate);
 		 iESDate endDate =new iESDate(edDate); 
 		Calendar today = new GregorianCalendar(TimeZone.getTimeZone("GMT+8"));
 		today.setTimeInMillis(Calendar.getInstance().getTimeInMillis());		
@@ -1602,7 +1588,7 @@ public class HisDataDao implements Serializable {
 	 * @return
 	 */
 	public List<HisDataTimeAndValue> GetStationHisDataMulti(
-			List<BuJianParam> listParam,Date reportDate) {		
+			List<BuJianParam> listParam, Date reportDate) {
 		  
 		List<HisDataTimeAndValue> result  = new ArrayList<HisDataTimeAndValue>();
 	    try{
@@ -2428,13 +2414,13 @@ public class HisDataDao implements Serializable {
 		Map<String,Double> measureDataMapOfYx = new HashMap<String,Double>();
 		Iterator it = configMapOfYx.entrySet().iterator();
 		while (it.hasNext()) { 
-			Map.Entry entry = (Map.Entry) it.next(); 
+			Entry entry = (Entry) it.next();
 			String paramKey = (String) entry.getKey();
-			measureDataMapOfYx.put(configMapOfYx.get(paramKey),fileMapOfYx.get(paramKey));			
+			measureDataMapOfYx.put(configMapOfYx.get(paramKey),fileMapOfYx.get(paramKey));
 		}
 		return measureDataMapOfYx;
 	}
-	
+
 	/***
 	 * 获取最新缓存文件中的遥测数据
 	 * 构建两个三段式Map，由这两个三段式Map返回三段式对应Map(三段式：value)
@@ -2442,7 +2428,7 @@ public class HisDataDao implements Serializable {
 	 * 2.虚拟状态量Id：value
 	 * 组合成三段式:value 返回
 	 * timeLineType 1 当前时间点 2上一个时间点
-	 * @param 
+	 * @param
 	 * @param
 	 * @param
 	 */
@@ -2468,8 +2454,8 @@ public class HisDataDao implements Serializable {
 					 String buJianCanShu = rs.getString("buJianCanShu");
 					 String configRealParam =buJianType + "-" +buJianId + "-" + buJianCanShu;
 					 configMapOfYc.put(xuniId,configRealParam);
-				 }   
-				 return configMapOfYc;  
+				 }
+				 return configMapOfYc;
 		     }});
 		//构建第二个三段式Map
 		Map<String,Double> fileMapOfYc = new HashMap<String,Double>();
@@ -2485,7 +2471,7 @@ public class HisDataDao implements Serializable {
 		int tmp = 0;
 		float f = 0;
 		int s = 0;
-		
+
 		Calendar today = new GregorianCalendar(TimeZone.getTimeZone("GMT+8"));
 		if(timeLineType == 1) {
 			today.setTimeInMillis(Calendar.getInstance().getTimeInMillis());
@@ -2498,7 +2484,7 @@ public class HisDataDao implements Serializable {
 		int today_hour = today.get(Calendar.HOUR_OF_DAY);
 		int today_minute = today.get(Calendar.MINUTE);
 		int index = today_minute / 5 ; // 当前要采集数据点的索引
-		
+
 		time = Integer.toString(today_year);
 		time = time + "-";
 		    if (today_month < 10)
@@ -2525,7 +2511,7 @@ public class HisDataDao implements Serializable {
 		    }
 		    timeTmp = time + ":";
 		    time = timeTmp + "00:00";
-		    
+
 		System.out.println("获取历史临时文件，当前时间是：" + String.valueOf(today_year) + "-"
 				+ String.valueOf(today_month) + "-" + String.valueOf(today_day)
 				+ " " + String.valueOf(today_hour));
@@ -2542,12 +2528,12 @@ public class HisDataDao implements Serializable {
 		String strCacheFilePath = iesbase+"/tmp/data_"
 		+ strYear + "_" + strMonth + strDay + File.separator + "yc5m_"
 		+ strYear + "_" + strMonth + strDay + "_" + strHour + ".dat";
-		
+
 		try {
 			FileInputStream fis = new FileInputStream(strCacheFilePath);
 			System.out.println(strCacheFilePath);
 			DataInputStream dis = new DataInputStream(fis);
-			
+
 			while (dis.available() != 0) {
 				Double valueOfYc = 0.00;
 				// 部件类型
@@ -2590,19 +2576,19 @@ public class HisDataDao implements Serializable {
 				s = dis.readByte();
 				s = dis.readByte();
 				s = dis.readByte();
-				
+
 			}
 			fis.close();
 			dis.close();
 		} catch (IOException e) {
 			System.out.println(e.toString());
 		}
-		
+
 		//由上面获取到的两个Map进行hmi数据更新
 		Map<String, Double> measureDataMapOfYc = new HashMap<String, Double>();
 		Iterator it = configMapOfYc.entrySet().iterator();
-		while (it.hasNext()) { 
-			Map.Entry entry = (Map.Entry) it.next(); 
+		while (it.hasNext()) {
+			Entry entry = (Entry) it.next();
 			String paramKey = (String) entry.getKey();
 			measureDataMapOfYc.put(configMapOfYc.get(paramKey),fileMapOfYc.get(paramKey));			
 		}	

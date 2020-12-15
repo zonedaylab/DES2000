@@ -8,10 +8,10 @@
         <option value="$PROJECT_DIR$/flink-kafka-event-to-hisproc-cleandata/pom.xml" />
         <option value="$PROJECT_DIR$/flink-kafka-event-to-reids/pom.xml" />
         <option value="$PROJECT_DIR$/timerdbsave/pom.xml" />
-        <option value="$PROJECT_DIR$/flink-kafka-event-to-timerdecision/pom.xml" />
         <option value="$PROJECT_DIR$/link-kafka-event-to-timerdbsave/pom.xml" />
-        <option value="$PROJECT_DIR$/flink-kafka-event-to-timerdbsave/pom.xml" />
         <option value="$PROJECT_DIR$/flink-kafka-event-to-basedate/pom.xml" />
+        <option value="$PROJECT_DIR$/flink-kafka-event-to-timerdbsave/pom.xml" />
+        <option value="$PROJECT_DIR$/flink-kafka-event-to-timerdecision/pom.xml" />
       </list>
     </option>
   </component>

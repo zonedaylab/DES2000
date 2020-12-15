@@ -46,14 +46,14 @@ public class FlinkKafkaProducer {
                                 Long second = LocalDateTime.now().toEpochSecond(ZoneOffset.of("+8"));
                                 if(second%60==0){
                                     sourceContext.collect(Timer.builder()
-                                            .timerType(3)
+                                            .timerType(1)
                                             .timerTime(LocalDateTime.now())
                                             .timerName("1分钟存盘")
                                             .build());
                                 }
                                 if(second%300==0){
                                     sourceContext.collect(Timer.builder()
-                                            .timerType(1)
+                                            .timerType(2)
                                             .timerTime(LocalDateTime.now())
                                             .timerName("5分钟存盘")
                                             .build());
@@ -61,14 +61,14 @@ public class FlinkKafkaProducer {
                                 }
                                 if(second%(60*60)==0){
                                     sourceContext.collect(Timer.builder()
-                                            .timerType(2)
+                                            .timerType(3)
                                             .timerTime(LocalDateTime.now())
                                             .timerName("1小时存盘")
                                             .build());
                                 }
                                 if(second%(60*60)*24==0){
                                     sourceContext.collect(Timer.builder()
-                                            .timerType(5)
+                                            .timerType(4)
                                             .timerTime(LocalDateTime.now())
                                             .timerName("1天存盘")
                                             .build());

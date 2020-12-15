@@ -34,7 +34,7 @@ public class PropertiesConstants {
     public static final String MYSQL_PORT = "mysql.port";
     public static final String MYSQL_USERNAME = "mysql.username";
     //redis
-    public static final String REDIS_HOST="127.0.0.1";
-    public static final int REDIS_PORT=6378;
-    public static final String REDIS_PASSWD="123456";
+    public static final String REDIS_HOST="redis.host";
+    public static final String REDIS_PORT="redis.port";
+    public static final String REDIS_PASSWD="redis.passwd";
 }

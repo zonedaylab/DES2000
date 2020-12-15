@@ -74,8 +74,8 @@ public class PVDecisionEngineService{
 
 	public void BFS(Device device) {
 		int i;
-		java.util.Stack<ActivityNode> stackNodesZeroInEdges = new java.util.Stack<ActivityNode>();
-		java.util.Stack<ActivityNode> stackNodesZeroInEdgesTmp = new java.util.Stack<ActivityNode>();
+		Stack<ActivityNode> stackNodesZeroInEdges = new Stack<ActivityNode>();
+		Stack<ActivityNode> stackNodesZeroInEdgesTmp = new Stack<ActivityNode>();
 		ArrayList<ActivityNode> listOut = new ArrayList<ActivityNode>(); //输出队列
 		StringBuilder strMsg = new StringBuilder();
 		strMsg.append(String.format("决策流程ID[%1$s],拓扑序列[",(new Integer(this.m_nFlowID)).toString()));
@@ -280,7 +280,7 @@ public class PVDecisionEngineService{
 		if(!listAOV.containsKey(node.getnActivityCode()))
 			listAOV.put(node.getnActivityCode(), node);
 
-	  	ArrayList<NodeRule> ruleList=new ArrayList<NodeRule>() ; //Judge rules 判断依据   	
+	  	ArrayList<NodeRule> ruleList=new ArrayList<NodeRule>() ; //Judge rules 判断依据
 		NodeRule rule = new NodeRule();
 		rule.setCONDITIONS(3); //3代表等于
 		rule.setJUDGE_VALUE("1"); //1代表值 如果为1则true 否则0false

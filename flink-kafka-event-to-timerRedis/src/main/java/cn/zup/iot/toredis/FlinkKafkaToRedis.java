@@ -14,6 +14,8 @@ import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer011;
 import org.apache.flink.streaming.connectors.redis.RedisSink;
 import org.apache.flink.streaming.connectors.redis.common.config.FlinkJedisPoolConfig;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 
 import static cn.zup.iot.common.utils.KafkaConfigUtil.buildKafkaProps;
@@ -39,7 +41,15 @@ public class FlinkKafkaToRedis {
                 .map(string -> JSON.parseObject(string, DataEvent.class)); //Fastjson 解析字符串成 DataEvent 对象
         dataStreamSource.print();
         //单节点 Redis
-        FlinkJedisPoolConfig conf = new FlinkJedisPoolConfig.Builder().setHost(PropertiesConstants.REDIS_HOST).setPort(PropertiesConstants.REDIS_PORT).setPassword(PropertiesConstants.REDIS_PASSWD).build();
+        Properties properties = new Properties();
+        ClassLoader classLoader = FlinkKafkaToRedis.class.getClassLoader();
+        InputStream resourceAsStream = classLoader.getResourceAsStream("application.properties");
+        try {
+            properties.load(resourceAsStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        FlinkJedisPoolConfig conf = new FlinkJedisPoolConfig.Builder().setHost(properties.getProperty("redis.host")).setPort(Integer.parseInt(properties.getProperty("redis.port")))/**.setPassword(PropertiesConstants.REDIS_PASSWD)*/.build();
         dataStreamSource.print();
         dataStreamSource.addSink(new RedisSink<DataEvent>(conf, new RedisSinkMapper()));
         env.execute("flink kafka To Redis");
