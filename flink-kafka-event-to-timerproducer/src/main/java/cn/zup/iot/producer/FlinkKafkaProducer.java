@@ -50,6 +50,7 @@ public class FlinkKafkaProducer {
                                             .timerTime(LocalDateTime.now())
                                             .timerName("1分钟存盘")
                                             .build());
+                                    System.out.println(LocalDateTime.now());
                                 }
                                 if(second%300==0){
                                     sourceContext.collect(Timer.builder()

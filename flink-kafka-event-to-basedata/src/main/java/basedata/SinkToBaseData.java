@@ -4,6 +4,8 @@ import cn.zup.iot.common.model.DataEvent;
 import com.alibaba.druid.pool.DruidDataSource;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementSetter;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,6 +27,7 @@ public class SinkToBaseData extends RichSinkFunction<DataEvent> {
     private Statement stmntLs;
     private ResultSet resultSetLs;
     private Properties properties;
+    private JdbcTemplate jdbcTemplateLs;
 
     /**
      * open() 方法中建立连接，这样不用每次 invoke 的时候都要建立连接和释放连接
@@ -52,6 +55,7 @@ public class SinkToBaseData extends RichSinkFunction<DataEvent> {
         dataSourceLs.setMinIdle(Integer.valueOf(properties.getProperty("ls.minIdle")));
         dataSourceLs.setMaxActive(Integer.valueOf(properties.getProperty("ls.maxActive")));
         dataSourceLs.setMaxWait(Integer.valueOf(properties.getProperty("ls.maxWait")));
+        jdbcTemplateLs = new JdbcTemplate(dataSourceLs);
     }
 
     @Override
@@ -77,7 +81,7 @@ public class SinkToBaseData extends RichSinkFunction<DataEvent> {
         int minute = localDateTime.getMinute();
         int second = localDateTime.getSecond();
         String tablename = "basedata"+String.valueOf(year)+String.format("%02d",month);
-        String createBrandDatabase = "CREATE TABLE "
+        String createBrandDatabase = "CREATE TABLE IF NOT EXISTS "
                 + tablename
                 + "( DataTime datetime NOT NULL,"
                 + "BuJianLeiXingID int(11) NOT NULL,"
@@ -88,61 +92,29 @@ public class SinkToBaseData extends RichSinkFunction<DataEvent> {
                 + "valueFlag int(11) DEFAULT NULL,"
                 + "PRIMARY KEY (DataTime,BuJianLeiXingID,BuJianID,BuJianCanShuID,ChangZhanID)"
                 + ") ENGINE=InnoDB DEFAULT CHARSET=utf8;";
-        String checkTable="show tables like "+"'"+tablename+"'";
-        connectionLs = dataSourceLs.getConnection();
-        stmntLs = connectionLs.createStatement();
-        resultSetLs =stmntLs.executeQuery(checkTable);
-        if(resultSetLs.next()==false) {
-            if(stmntLs.executeUpdate(createBrandDatabase)==0){
-                System.out.println("create table success!");
-            }
-        }
-        try {
-            String datatime = String.valueOf(year)+"-"+String.format("%02d",month)+"-"+String.format("%02d",day)+" "+String.format("%02d",hour)+"-"+String.format("%02d",minute)+"-"+String.format("%02d",second);
-//            String sql1 = "select DataTime from "+tablename+" where DataTime="+"'"+datatime+"'"+" and BuJianLeiXingID="+value.getComponentType()+" and BuJianID="+value.getComponentId()+" and BuJianCanShuID="+value.getComponentParamId()+" and ChangZhanID="+value.getStationId();
-//            psLs =  connectionLs.prepareStatement(sql1);
-//            resultSetLs = psLs.executeQuery();
-//            //如果查询到有此数据，就更新
-//            if(resultSetLs.next()==true){
-//                String sql = "update "+tablename+" set "+value+"=?"+ " where DataTime="+"'"+datatime+"'"+ " and BuJianLeiXingID="+value.getComponentType()+" and BuJianID="+value.getComponentId()+" and BuJianCanShuID="+value.getComponentParamId()+" and ChangZhanID="+value.getStationId();
-//                System.out.println(sql);
-//                psLs =  connectionLs.prepareStatement(sql);
-//                psLs.setDouble(1,Double.valueOf(value.getDataValue()));
-//                psLs.executeUpdate();
-//            }else{
-//                long t9 = System.currentTimeMillis();
-            String sql = "insert DELAYED into "+tablename+" (DataTime, BuJianLeiXingID, BuJianID, BuJianCanShuID, ChangZhanID,value,valueFlag) values(?,?,?,?,?,?,?)";
-            System.out.println(sql);
-            psLs =  connectionLs.prepareStatement(sql);
-            psLs.setString(1,datatime);
-            psLs.setInt(2,value.getComponentType());
-            psLs.setInt(3,value.getComponentId());
-            psLs.setInt(4,value.getComponentParamId());
-            psLs.setInt(5,value.getStationId());
-            psLs.setDouble(6,Double.valueOf(value.getDataValue()));
-            psLs.setDouble(7,0);
-            psLs.executeUpdate();
-//            }
-            psLs.close();
-            resultSetLs.close();
-            stmntLs.close();
-            connectionLs.close();
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            e.printStackTrace();
-        }
+        jdbcTemplateLs.execute(createBrandDatabase);
+        String datatime = String.valueOf(year)+"-"+String.format("%02d",month)+"-"+String.format("%02d",day)+" "+String.format("%02d",hour)+"-"+String.format("%02d",minute)+"-"+String.format("%02d",second);
+        insertBaseData(tablename,datatime,value);
         long t2 = System.currentTimeMillis();
         System.out.println("sink一次时间为："+(t2-t1));
     }
 
-    private static Connection getConnection() {
-        Connection con = null;
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            con = DriverManager.getConnection("jdbc:mysql://localhost:3306/test?useSSL=false&useUnicode=true&characterEncoding=UTF8&serverTimezone=GMT", "root", "iesapp");
-        } catch (Exception e) {
-            System.out.println("-----------mysql get connection has exception , msg = "+ e.getMessage());
-        }
-        return con;
+    public void insertBaseData(String tablename,String datatime,DataEvent value){
+        StringBuffer sql1 = new StringBuffer();
+        sql1.append(" insert DELAYED into "+tablename);
+        sql1.append("(DataTime, BuJianLeiXingID, BuJianID, BuJianCanShuID, ChangZhanID,value,valueFlag) values(?,?,?,?,?,?,?)");
+        System.out.println(sql1);
+        jdbcTemplateLs.update(String.valueOf(sql1),new PreparedStatementSetter(){
+            public void setValues(PreparedStatement ps) throws SQLException {
+                ps.setString(1,datatime);
+                ps.setInt(2,value.getComponentType());
+                ps.setInt(3,value.getComponentId());
+                ps.setInt(4,value.getComponentParamId());
+                ps.setInt(5,value.getStationId());
+                ps.setDouble(6,Double.valueOf(value.getDataValue()));
+                ps.setDouble(7,0);
+            }
+        });
     }
+
 }
