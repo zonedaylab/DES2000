@@ -19,9 +19,9 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 /**
- * Desc:
- * weixin: zhisheng_tian
- * blog: http://www.54tianzhisheng.cn/
+ * sink到清洗表中
+ * @author shishanli
+ * @date 2021年1月3日20:15:53
  */
 public class SinkToCelanData extends RichSinkFunction<DataEvent> {
     private DruidDataSource dataSourceLs;
@@ -41,7 +41,8 @@ public class SinkToCelanData extends RichSinkFunction<DataEvent> {
 
     /**
      * open() 方法中建立连接，这样不用每次 invoke 的时候都要建立连接和释放连接
-     *
+     * @author shishanli
+     * @date 2021年1月5日00:48:29
      * @param parameters
      * @throws Exception
      */
@@ -76,57 +77,72 @@ public class SinkToCelanData extends RichSinkFunction<DataEvent> {
         dataSourceMs.setMaxWait(Integer.valueOf(properties.getProperty("ms.maxWait")));
         jdbcTemplateLs = new JdbcTemplate(dataSourceLs);
         jdbcTemplateMs = new JdbcTemplate(dataSourceMs);
-//        componentParamMap = new  HashMap<String,Integer>();
+        //将bujiancanshu表中的数据存入hashMap中
         componentParamMap = getDtype();
 
     }
 
+    /**
+     * close()关闭连接
+     * @author shishanli
+     * @date 2021年1月5日00:49:02
+     * @throws Exception
+     */
     @Override
     public void close() throws Exception {
         super.close();
     }
 
     /**
-     * 每条数据的插入都要调用一次 invoke() 方法
-     *
-     * @param value
+     * 每条kafka消息的插入都要调用一次 invoke() 方法
+     * @author shishanli
+     * @date 2021年1月5日00:49:17
+     * @param dataEvent
      * @param context
      * @throws Exception
      */
     @Override
-    public void invoke(DataEvent value, Context context) throws Exception {
+    public void invoke(DataEvent dataEvent, Context context) throws Exception {
+        LocalDateTime localDateTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(dataEvent.getEventTime()), TimeZone.getDefault().toZoneId());
+        int year = localDateTime.getYear();
+        int month = localDateTime.getMonthValue();
+        String tablename= "";
+        //如果为空，就什么也不执行
+        if(componentParamMap.get(String.valueOf(dataEvent.getComponentType())+"."+String.valueOf(dataEvent.getComponentId()))==null){
 
-        long t1 = System.currentTimeMillis();
-        //首先根据部件类型id、部件参数id从ms数据库里的bujiancanshu表查找Dtype,根据Dtype的的值选择插入ycdata表(4)，还是kwhdata表(2)。
-        //插入数据表时根据DataEvent的时间，取localDate的分钟位为x，x=(x/5)*5,先判断这个DataEvent在数据库中有没有，如果有就更新，没有就插入
-        long t3 = System.currentTimeMillis();
-        int dtype = 0;
-        if(componentParamMap.get(String.valueOf(value.getComponentType())+"."+String.valueOf(value.getComponentId()))==null){
-            System.out.println(String.valueOf(value.getComponentType())+"."+String.valueOf(value.getComponentId()));
-            dtype = 4;
-        }else{
-            dtype = componentParamMap.get(String.valueOf(value.getComponentType())+"."+String.valueOf(value.getComponentId()));
-            //dtype =getDtype(value.getComponentType(),value.getComponentParamId());
         }
+        //如果在hashMap中查到ComponentType.ComponentId的值为4，令tablename=ycdata
+        else if(componentParamMap.get(String.valueOf(dataEvent.getComponentType())+"."+String.valueOf(dataEvent.getComponentId()))==4){
+            tablename = "ycdata"+String.valueOf(year)+String.format("%02d",month);
+            executeTable(tablename,dataEvent,localDateTime);
+        }
+        //如果在hashMap中查到ComponentType.ComponentId的值为2，令tablename=kwhdata
+        else if(componentParamMap.get(String.valueOf(dataEvent.getComponentType())+"."+String.valueOf(dataEvent.getComponentId()))==2){
+            tablename = "kwhdata"+String.valueOf(year)+String.format("%02d",month);
+            executeTable(tablename,dataEvent,localDateTime);
+        }
+        else{
+            tablename = "kwhdata"+String.valueOf(year)+String.format("%02d",month);
+            executeTable(tablename,dataEvent,localDateTime);
+        }
+    }
 
-        long t4 = System.currentTimeMillis();
-        System.out.println("从HashMap中取数据的时间："+(t4-t3));
-        LocalDateTime localDateTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(value.getEventTime()), TimeZone.getDefault().toZoneId());
-        System.out.println("信号当前的时间："+localDateTime);
+    /**
+     * 目的是为了解耦，从hashMap取出的值等于2或等于4时才会继续执行下面操作
+     * @author shishanli
+     * @date 2021年1月5日00:49:34
+     * @param tablename
+     * @param dataEvent
+     * @param localDateTime
+     */
+    public void executeTable(String tablename,DataEvent dataEvent,LocalDateTime localDateTime){
         int year = localDateTime.getYear();
         int month = localDateTime.getMonthValue();
         int day = localDateTime.getDayOfMonth();
         int hour = localDateTime.getHour();
+        //x=(x/5)*5表示将信号时间归为0,5,10,15。。。
         int minute = (localDateTime.getMinute()/5)*5;
-        //int second = localDateTime.getSecond();，令second默认为0
         int second = 0;
-        String tablename= "";
-        //创建数据库
-        if(dtype==4){
-            tablename = "ycdata"+String.valueOf(year)+String.format("%02d",month);
-        }else {
-            tablename = "kwhdata"+String.valueOf(year)+String.format("%02d",month);
-        }
         String createBrandDatabase = "CREATE TABLE IF NOT EXISTS "
                 + tablename
                 + "( RiQi datetime NOT NULL DEFAULT '1970-02-01 00:00:00',"
@@ -141,25 +157,28 @@ public class SinkToCelanData extends RichSinkFunction<DataEvent> {
                 + ") ENGINE=InnoDB DEFAULT CHARSET=utf8;";
         jdbcTemplateLs.execute(createBrandDatabase);
         String datatime = String.valueOf(year)+"-"+String.format("%02d",month)+"-"+String.format("%02d",day)+" "+String.format("%02d",0)+"-"+String.format("%02d",minute)+"-"+String.format("%02d",second);
-        //如果查询到有此数据，就更新
-        if(queryData(tablename,datatime,value)>0){
-            updateCleanData(tablename,datatime,value,hour);
+        //如果查询到表中有此数据，就更新
+        if(queryData(tablename,datatime,dataEvent)>0){
+            updateCleanData(tablename,datatime,dataEvent,hour);
         }else{
-            insertCleanData(tablename,datatime,value,hour);
+            insertCleanData(tablename,datatime,dataEvent,hour);
         }
-        long t2 = System.currentTimeMillis();
-        System.out.println("sink一次时间为："+(t2-t1));
-
-
     }
 
-
+    /**
+     * 将bujiancanshu表中的数据存入hashMap中,其中bjlxID.ID作为键，DType作为值,根据Dtype值的不同插入不同的清洗表
+     * @author shishanli
+     * @date 2021年1月5日00:49:53
+     * @return Map<String,Integer>
+     * @throws SQLException
+     */
     public Map<String,Integer> getDtype() throws SQLException {
         Map<String,Integer> resultMap = new  HashMap<String,Integer>();
         try {
             StringBuffer sb = new StringBuffer();
             sb.append(" SELECT bjlxID,ID,DType from bujiancanshu");
             resultMap = jdbcTemplateMs.query(sb.toString(), new ResultSetExtractor<Map<String,Integer>>() {
+                @Override
                 public Map<String,Integer> extractData(ResultSet rs) throws SQLException, DataAccessException {
                     Map<String, Integer> result = new HashMap<String, Integer>();
                     while (rs.next()) {
@@ -175,18 +194,38 @@ public class SinkToCelanData extends RichSinkFunction<DataEvent> {
         }
         return resultMap;
     }
-    public int queryData(String tablename,String datatime,DataEvent value){
+
+    /**
+     * 查询表中是否存在这条数据
+     * @author shishanli
+     * @date 2021年1月5日00:49:53
+     * @param tablename
+     * @param datatime
+     * @param dataEvent
+     * @return int
+     */
+    public int queryData(String tablename,String datatime,DataEvent dataEvent){
         StringBuffer sql = new StringBuffer();
         sql.append(" select count(*) from "+tablename);
         sql.append(" where RiQi='"+datatime);
-        sql.append("' and BuJianLeiXingID="+value.getComponentType());
-        sql.append(" and BuJianID="+value.getComponentId());
-        sql.append(" and BuJianCanShuID="+value.getComponentParamId());
-        sql.append(" and ChangZhanID="+value.getStationId());
+        sql.append("' and BuJianLeiXingID="+dataEvent.getComponentType());
+        sql.append(" and BuJianID="+dataEvent.getComponentId());
+        sql.append(" and BuJianCanShuID="+dataEvent.getComponentParamId());
+        sql.append(" and ChangZhanID="+dataEvent.getStationId());
         int count = jdbcTemplateLs.queryForObject(sql.toString(), Integer.class);
         return count;
     }
-    public void insertCleanData(String tablename,String datatime,DataEvent value,int hour){
+
+    /**
+     * 插入数据到清洗表中
+     * @author shishanli
+     * @date 2021年1月5日00:49:53
+     * @param tablename
+     * @param datatime
+     * @param dataEvent
+     * @param hour
+     */
+    public void insertCleanData(String tablename,String datatime,DataEvent dataEvent,int hour){
         StringBuffer sql = new StringBuffer();
         sql.append(" insert DELAYED into "+tablename);
         sql.append("(RiQi, BuJianLeiXingID, BuJianID, BuJianCanShuID, ChangZhanID, H"+String.valueOf(hour));
@@ -194,32 +233,44 @@ public class SinkToCelanData extends RichSinkFunction<DataEvent> {
         System.out.println(sql);
         jdbcTemplateLs.update(String.valueOf(sql),new PreparedStatementSetter(){
 
+            @Override
             public void setValues(PreparedStatement ps) throws SQLException {
 
                 ps.setString(1,datatime);
-                ps.setInt(2,value.getComponentType());
-                ps.setInt(3,value.getComponentId());
-                ps.setInt(4,value.getComponentParamId());
-                ps.setInt(5,value.getStationId());
-                ps.setDouble(6,Double.valueOf(value.getDataValue()));
+                ps.setInt(2,dataEvent.getComponentType());
+                ps.setInt(3,dataEvent.getComponentId());
+                ps.setInt(4,dataEvent.getComponentParamId());
+                ps.setInt(5,dataEvent.getStationId());
+                ps.setDouble(6,Double.valueOf(dataEvent.getDataValue()));
             }
         });
     }
-    public void updateCleanData(String tablename,String datatime,DataEvent value,int hour){
+
+    /**
+     * 更新数据到清洗表中
+     * @author shishanli
+     * @date 2021年1月5日00:49:53
+     * @param tablename
+     * @param datatime
+     * @param dataEvent
+     * @param hour
+     */
+    public void updateCleanData(String tablename,String datatime,DataEvent dataEvent,int hour){
         StringBuffer sql = new StringBuffer();
         sql.append(" update "+tablename);
         sql.append(" set H"+String.valueOf(hour));
         sql.append("=? where RiQi = '"+datatime);
-        sql.append("' and BuJianLeiXingID = "+value.getComponentType());
-        sql.append(" and BuJianID = "+value.getComponentId());
-        sql.append(" and BuJianCanShuID = "+value.getComponentParamId());
-        sql.append(" and ChangZhanID = "+value.getStationId());
+        sql.append("' and BuJianLeiXingID = "+dataEvent.getComponentType());
+        sql.append(" and BuJianID = "+dataEvent.getComponentId());
+        sql.append(" and BuJianCanShuID = "+dataEvent.getComponentParamId());
+        sql.append(" and ChangZhanID = "+dataEvent.getStationId());
         System.out.println(sql);
         jdbcTemplateLs.update(String.valueOf(sql),new PreparedStatementSetter(){
 
+            @Override
             public void setValues(PreparedStatement ps) throws SQLException {
 
-                ps.setDouble(1,Double.valueOf(value.getDataValue()));
+                ps.setDouble(1,Double.valueOf(dataEvent.getDataValue()));
             }
         });
     }

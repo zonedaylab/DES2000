@@ -8,7 +8,8 @@ import cn.zup.iot.timerdecision.service.settings.StationChannelId;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class DecisionEngineService{ private InitTreeDao initTreeDao = new InitTreeDao();
+public class DecisionEngineService{
+	private DecisionTreePmsDao decisionTreePmsDao = new DecisionTreePmsDao();
 
 	private ActivityNodeService activityNodeService = new ActivityNodeService();
 
@@ -24,41 +25,91 @@ public class DecisionEngineService{ private InitTreeDao initTreeDao = new InitTr
 
 
 
-	///#region 基于AOV网的广度优先搜索算法
+
 	private HashMap<Integer, ActivityNode> listAOV = new HashMap<Integer, ActivityNode>();
 	private int m_nFlowID;
 	private Map<String,String> map=new HashMap<String,String>();
 
+
+
+	/**
+	 * 对决策树进行初始化，并利用初始化的决策树进行决策。
+	 * 每一个设备都必须完成初始化和决策，因为节点的状态是会改变的
+	 * @Author 史善力
+	 * @date 2020年12月23日21:25:46
+	 * @param deviceList 某个决策树下的所有设备信息
+	 * @param treeId 决策树id
+	 */
+	public void BFSAll(List<Device> deviceList,Integer treeId) {
+		//每次运行时清空map
+		map.clear();
+		int counts = 0;
+		//设备可以是电站，也可以是具体的设备，因为咱们要完成的目标是要把所有的设备可配置
+		for(Device item:deviceList)
+		{
+			System.out.println("初始化决策树");
+			//对每一个设备都要初始化决策树，因为对一个设备进行决策后，决策树就已经变了
+			InitAOV(treeId);
+			//广度遍历，对刚初始化的这棵树进行遍历
+			System.out.println("广度遍历");
+			BFS(item);
+		}
+	}
+
+	/**
+	 * 利用传来的treeId对该决策树进行初始化
+	 * listAOV的格式是HashMap<Integer, ActivityNode>，key为节点码，value为节点
+	 * @Author 史善力
+	 * @date 2020年12月23日20:16:54
+	 * @param treeId
+	 * @return boolean
+	 */
+	public boolean InitAOV(Integer treeId) {
+		listAOV.clear();
+		listAOV = decisionTreePmsDao.initDecisionTree(treeId);
+		return true;
+	}
+
+	/**
+	 * 利用决策树对设备进行决策
+	 * @Author 史善力
+	 * @date 2020年12月23日21:35:19
+	 * @param device 包括设备id和设备名称
+	 */
 	public void BFS(Device device) {
 		int i;
+		//存放决策树所有运行过的节点
 		java.util.Stack<ActivityNode> stackNodesZeroInEdges = new java.util.Stack<ActivityNode>();
+		//只是用来存放子节点的，临时栈
 		java.util.Stack<ActivityNode> stackNodesZeroInEdgesTmp = new java.util.Stack<ActivityNode>();
 		ArrayList<ActivityNode> listOut = new ArrayList<ActivityNode>(); //输出队列
 		StringBuilder strMsg = new StringBuilder();
 		strMsg.append(String.format("决策流程ID[%1$s],拓扑序列[",(new Integer(this.m_nFlowID)).toString()));
 		try
 		{
-			//循环检测邻接表入度为0的活动，并将其压栈，同期入栈中的为并行活动
+			//对决策树所有的结点进行遍历
 			for (Map.Entry<Integer, ActivityNode> item : listAOV.entrySet())
 			{
-				//每个节点的入边都是一个
+				//只有父节点的入边才为0
 				if (item.getValue().getInEdges() == 0)
 				{
 					stackNodesZeroInEdges.push(item.getValue());
 				}
 			}
+			//下面是对决策树所有的节点进行遍历,把把决策结果放入listOut中，把遍历的节点放入stackNodesZeroInEdges中
 			while (stackNodesZeroInEdges.size() > 0)
 			{
 				while (stackNodesZeroInEdges.size() > 0)
 				{
-					//取出元素，每次只取出一个结点
-					ActivityNode node = stackNodesZeroInEdges.pop(); //栈顶元素出栈
-					//目的是activityNodeService也能对node的属性进行改变
+					//栈顶元素出栈
+					ActivityNode node = stackNodesZeroInEdges.pop();
+					//方便在activityNodeService对这个节点操作
 					activityNodeService.node = node;
 					System.out.println("准备进入的节点码为"+node.getnActivityCode());
-					//listAOV是这个树的架构，device是含有设备id和设备名称，这样如果有错，也知道哪里错了
+					//对刚出栈的节点进行判断，是不是能够执行业务方法决策，是不是要走的决策路线，进而把决策结果、节点的类型给更新
 					activityNodeService.ChangeActivityProperty(listAOV, device);
-					listOut.add(node); //将栈顶元素放入拓扑序列数组中，同时也表示了已经进入拓扑序列中的元素个数
+					//将对操作后的节点放入对列元素中，供后期决策结果查看和入库
+					listOut.add(node);
 					System.out.println("已经进入的节点码为"+node.getnActivityCode());
 					if (node.getStrNextActivityCodes().length() == 0)
 					{
@@ -89,15 +140,18 @@ public class DecisionEngineService{ private InitTreeDao initTreeDao = new InitTr
 				}
 				stackNodesZeroInEdgesTmp.clear();
 			}
-
-			StringBuilder strResult=new StringBuilder();//决策结果变量
-			StringBuilder strResultCode=new StringBuilder();//决策结果变量
+			//决策结果变量
+			StringBuilder strResult=new StringBuilder();
+			//决策结果变量
+			StringBuilder strResultCode=new StringBuilder();
 			Integer treeId= 0;
 			boolean warnFlag = false;
 			int warnSourceId = 0;
 			System.out.println(listAOV.size());
-			if (listOut.size() == listAOV.size()) //当拓扑序列中的元素个数为总元素个数，则拓扑排序成功并输入序列
+			//当拓扑序列中的元素个数为总元素个数，则拓扑排序成功并输入序列
+			if (listOut.size() == listAOV.size())
 			{
+				//将节点遍历的顺序打印出来
 				for (i = 0; i < listOut.size(); i++)
 				{
 					strMsg.append((new Integer(listOut.get(i).getnActivityCode())).toString());
@@ -105,17 +159,18 @@ public class DecisionEngineService{ private InitTreeDao initTreeDao = new InitTr
 					{
 						strMsg.append("-->");
 					}
-					//finish 节点 ，died 节点  					
+					//finish 节点 ，died 节点
 				}
 				strMsg.append("]");
 				System.out.println("全部节点顺序"+strMsg);
-				//输出决策结果
+				//将决策结果打印出来
 				for (i = 0; i < listOut.size(); i++)
 				{
 					ActivityNode  node=listOut.get(i);
-					if(node.getByActivityNodeType()!="FINISHED")
+					//因为只有节点类型为finished的节点，才能执行出决策结果
+					if(node.getByActivityNodeType()!="FINISHED") {
 						continue;
-//					System.out.println("node.getMessage()="+node.getMessage());
+					}
 					if(node.getMessage()!=null && !node.getMessage().equals(""))
 					{
 						strResultCode.append(node.getnActivityCode());
@@ -133,10 +188,10 @@ public class DecisionEngineService{ private InitTreeDao initTreeDao = new InitTr
 //					if (i < listOut.size() - 1)
 //					{
 //						strResult.append("-->");
-//					}								
+//					}
 				}
 				System.out.println("警告："+strResult);
-//				strResult.append("]");					
+//				strResult.append("]");
 			}
 			else
 			{
@@ -157,7 +212,7 @@ public class DecisionEngineService{ private InitTreeDao initTreeDao = new InitTr
 			 * 存在告警进行告警重复和告警恢复判断、
 			 * 不存在告警进行诊断结果添加判断
 			 */
-			//根据诊断是否存在告警信息进行判断
+			//如果决策结果不为空，判断告警是否存在，如果不存在，就根据warntrueflag判断是否推送告警（即入库）
 			if(!strResult.toString().equals(""))
 			{//诊断存在告警信息
 				//保存诊断结果
@@ -183,8 +238,8 @@ public class DecisionEngineService{ private InitTreeDao initTreeDao = new InitTr
 						AddDeviceWarnRecord(device,strResult.toString(),strResultCode.toString(),warnSourceId, treeId);
 					}
 				}
-
-			}else{//诊断不存在告警信息，进行手动推送的告警恢复操作
+			//决策结果为空，进行手动推送的告警恢复操作，即将告警信息的属性置为该告警已经解决
+			}else{
 				//推送告警标记
 				boolean warntrueflag = false;
 				//手动推送告警信息获取
@@ -213,22 +268,6 @@ public class DecisionEngineService{ private InitTreeDao initTreeDao = new InitTr
 		{
 			//	ObjectManager.instance.ShowLogError("BFS执行异常", ex);
 		}
-	}
-	//deviceList:设备list，获取到所有的设备，比如济南所有的电站
-	public void BFSAll(List<Device> deviceList,Integer treeId) {
-
-		map.clear(); //清空map
-		int counts = 0;
-		for(Device item:deviceList)//设备可以是电站，也可以是具体的设备，因为咱们要完成的目标是要把所有的设备可配置
-		{
-			System.out.println("初始化决策树");
-			//对每一个设备都要初始化决策树，为什么，因为对每一个设备都要进行决策，判断有没有问题，如果一个设备有问题，那这颗树某个节点的属性就改变啦，所以进行初始化
-			InitAOV(treeId);
-			//广度遍历，对刚初始化的这棵树进行遍历
-			System.out.println("广度遍历");
-			BFS(item);
-		}
-		//UpdateWarnRecord(treeId);
 	}
 
 	/***
@@ -402,464 +441,36 @@ public class DecisionEngineService{ private InitTreeDao initTreeDao = new InitTr
 		}
 		System.out.println("共更新"+updateNum+"条数据");
 	}
-	//初始化
-	public boolean InitAOV(Integer treeId) {
-		//每一个设备都重新初始化,虽然是一条树，但如果这个设备检测到错误，那这课树节点的状态也就会改变啦，所以要初始化
-		listAOV.clear();
-		listAOV = initTreeDao.getTree(treeId);
-	//	ActivityNode node;
-		return true;
-//		//父节点流转规则
-//		//整体是个二叉树
-//		if(treeId == 1) {
-//			//1.初始化父亲节点 判断电站状态
-//			node = new ActivityNode();
-//			node.Init();
-//			node.setTreeId(1);
-//			node.setnAcitivityID(1);//1，2，3，主键自增
-//			node.setnActivityCode(1);//节点的编码，和发票码一样，有意义
-//			node.setnParentCount(0);//父母节点数量
-//			node.setInEdges(node.getnParentCount());//入边
-//			node.setByActivityNodeType(node_type.FINISHED);//活动节点状态，
-//			node.setStrNextActivityCodes("2,3");//id是没有意义的，
-//			node.setDataAddress("1");//判定业务的标识，也就是数据接口地址，而接口地址返回一个值，用这个值和rule里的Judge_value进行判断
-//			node.setWarnFlag(false);//是否产生告警，true为告警，false为不告警
-//			//判断 Map 集合对象中是否包含指定的键名。如果 Map 集合中包含指定的键名，则返回 true，否则返回 false。键是活动序号，值是node
-//			if (!listAOV.containsKey(node.getnActivityCode()))
-//				listAOV.put(node.getnActivityCode(), node);
-//
-//			ArrayList<NodeRule> ruleList = new ArrayList<NodeRule>(); //Judge rules 判断依据
-//			NodeRule rule = new NodeRule();
-//			//规则
-//			rule.setCONDITIONS(3); //3代表等于，2代表，1代表
-//			rule.setJUDGE_VALUE("1"); //1代表值 如果为1则true 否则0false
-//			rule.setGOTO_ACTIVITY(3);
-//			ruleList.add(rule);
-//			rule = new NodeRule();
-//			rule.setCONDITIONS(3); //3代表等于
-//			rule.setJUDGE_VALUE("0"); //1代表值 如果为1则true 否则0false
-//			rule.setGOTO_ACTIVITY(2);
-//			ruleList.add(rule);
-//			node.setRuleList(ruleList);
-//
-//
-//			//2.初始化子节点 电站状态正常后逆变器状态
-//			node = new ActivityNode();
-//			node.Init();
-//			node.setTreeId(1);
-//			node.setnAcitivityID(2);
-//			node.setnActivityCode(2);
-//			node.setnParentCount(1);
-//			node.setInEdges(node.getnParentCount());
-//			node.setByActivityNodeType(node_type.SLEEP);
-//			node.setStrNextActivityCodes("4,5");
-//			node.setDataAddress("2");
-//			node.setWarnFlag(true);
-//			node.setWarnSourceId(1000); //告警配置ID，判断逆变器通讯异常
-//			if (!listAOV.containsKey(node.getnActivityCode()))
-//				listAOV.put(node.getnActivityCode(), node);
-//
-//			ruleList = new ArrayList<NodeRule>(); //Judge rules 判断依据
-//			rule = new NodeRule();
-//			rule.setCONDITIONS(3); //3代表等于
-//			rule.setJUDGE_VALUE("1"); //1代表值 如果为1则true 否则false
-//			rule.setGOTO_ACTIVITY(5);
-//			ruleList.add(rule);
-//			rule = new NodeRule();
-//			rule.setCONDITIONS(3); //3代表等于
-//			rule.setJUDGE_VALUE("0"); //1代表值 如果为1则true 否则false
-//			rule.setGOTO_ACTIVITY(4);
-//			ruleList.add(rule);
-//			node.setRuleList(ruleList);
-//
-//
-//			//电站状态 通讯异常节点
-//			node = new ActivityNode();
-//			node.Init();
-//			node.setTreeId(1);
-//			node.setnActivityCode(3);
-//			node.setnAcitivityID(3);
-//			node.setnParentCount(1);
-//			node.setInEdges(node.getnParentCount());
-//			node.setByActivityNodeType(node_type.SLEEP);
-//			node.setStrNextActivityCodes("");
-//			node.setWarnFlag(false);
-//
-//			if (!listAOV.containsKey(node.getnActivityCode()))
-//				listAOV.put(node.getnActivityCode(), node);
-//
-//
-//			//逆变器状态 通讯正常 判断电压电流
-//			node = new ActivityNode();
-//			node.Init();
-//			node.setTreeId(1);
-//			node.setnActivityCode(4);
-//			node.setnAcitivityID(4);
-//			node.setnParentCount(1);
-//			node.setDataAddress("3");
-//			node.setWarnFlag(true);
-//			node.setWarnSourceId(1001); //判断电压电流离散率 是否破损
-//			node.setInEdges(node.getnParentCount());
-//			node.setByActivityNodeType(node_type.SLEEP);
-//			node.setStrNextActivityCodes("6,7");
-//
-//			if (!listAOV.containsKey(node.getnActivityCode()))
-//				listAOV.put(node.getnActivityCode(), node);//存的是节点码和节点
-//
-//			ruleList = new ArrayList<NodeRule>(); //Judge rules 判断依据
-//			rule = new NodeRule();
-//			rule.setCONDITIONS(3); //3代表等于
-//			rule.setJUDGE_VALUE("1"); //1代表值 如果为1则true 否则false
-//			rule.setGOTO_ACTIVITY(7);
-//			ruleList.add(rule);
-//			rule = new NodeRule();
-//			rule.setCONDITIONS(3); //3代表等于
-//			rule.setJUDGE_VALUE("0"); //1代表值 如果为1则true 否则false
-//			rule.setGOTO_ACTIVITY(6);
-//			ruleList.add(rule);
-//			node.setRuleList(ruleList);
-//
-//
-//			//逆变器状态 通讯异常节点
-//			node = new ActivityNode();
-//			node.Init();
-//			node.setTreeId(1);
-//			node.setnActivityCode(5);
-//			node.setnAcitivityID(5);
-//			node.setnParentCount(1);
-//			node.setInEdges(node.getnParentCount());
-//			node.setByActivityNodeType(node_type.SLEEP);
-//			node.setStrNextActivityCodes("");
-//			node.setWarnFlag(false);
-//
-//			if (!listAOV.containsKey(node.getnActivityCode()))
-//				listAOV.put(node.getnActivityCode(), node);
-//
-//
-//			//电流电压正常 判断分组电站电量
-//			node = new ActivityNode();
-//			node.Init();
-//			node.setTreeId(1);
-//			node.setnActivityCode(6);
-//			node.setnAcitivityID(6);
-//			node.setnParentCount(1);
-//			node.setDataAddress("4");
-//			node.setWarnFlag(true);
-//			node.setWarnSourceId(1002); //判断分组电站电量   需要清洗
-//			node.setInEdges(node.getnParentCount());
-//			node.setByActivityNodeType(node_type.SLEEP);
-//			node.setStrNextActivityCodes("8,9,10");
-//
-//			if (!listAOV.containsKey(node.getnActivityCode()))
-//				listAOV.put(node.getnActivityCode(), node);
-//
-//			ruleList = new ArrayList<NodeRule>(); //Judge rules 判断依据
-//			rule = new NodeRule();
-//			rule.setCONDITIONS(3); //3代表等于
-//			rule.setJUDGE_VALUE("1"); //1代表值 如果为0则正常 1代表 需要现场人员处理2代表需要清洗
-//			rule.setGOTO_ACTIVITY(9);
-//			ruleList.add(rule);
-//			rule = new NodeRule();
-//			rule.setCONDITIONS(3); //3代表等于
-//			rule.setJUDGE_VALUE("0"); //1代表值 如果为0则正常 1代表 需要现场人员处理2代表需要清洗
-//			rule.setGOTO_ACTIVITY(8);
-//			ruleList.add(rule);
-//			rule = new NodeRule();
-//			rule.setCONDITIONS(3); //3代表等于
-//			rule.setJUDGE_VALUE("2"); //1代表值 如果为0则正常 1代表 需要现场人员处理2代表需要清洗
-//			rule.setGOTO_ACTIVITY(10);
-//			ruleList.add(rule);
-//			node.setRuleList(ruleList);
-//
-//
-//			//电流电压异常判断
-//			node = new ActivityNode();
-//			node.Init();
-//			node.setTreeId(1);
-//			node.setnActivityCode(7);
-//			node.setnAcitivityID(7);
-//			node.setnParentCount(1);
-//			node.setInEdges(node.getnParentCount());
-//			node.setByActivityNodeType(node_type.SLEEP);
-//			node.setStrNextActivityCodes("");
-//			node.setWarnFlag(false);
-//
-//			if (!listAOV.containsKey(node.getnActivityCode()))
-//				listAOV.put(node.getnActivityCode(), node);
-//
-//
-//			//分组正常判断 正常
-//			node = new ActivityNode();
-//			node.Init();
-//			node.setTreeId(1);
-//			node.setnActivityCode(8);
-//			node.setnAcitivityID(8);
-//			node.setnParentCount(1);
-//			node.setInEdges(node.getnParentCount());
-//			node.setByActivityNodeType(node_type.SLEEP);
-//			node.setStrNextActivityCodes("");
-//			node.setWarnFlag(false);
-//
-//			if (!listAOV.containsKey(node.getnActivityCode()))
-//				listAOV.put(node.getnActivityCode(), node);
-//
-//
-//			//分组异常判断 需要运维人员处理
-//			node = new ActivityNode();
-//			node.Init();
-//			node.setTreeId(1);
-//			node.setnActivityCode(9);
-//			node.setnAcitivityID(9);
-//			node.setnParentCount(1);
-//			node.setInEdges(node.getnParentCount());
-//			node.setByActivityNodeType(node_type.SLEEP);
-//			node.setStrNextActivityCodes("");
-//			node.setWarnFlag(false);
-//
-//			if (!listAOV.containsKey(node.getnActivityCode()))
-//				listAOV.put(node.getnActivityCode(), node);
-//
-//			//分组异常判断 需要清洗
-//			node = new ActivityNode();
-//			node.Init();
-//			node.setTreeId(1);
-//			node.setnActivityCode(10);
-//			node.setnAcitivityID(10);
-//			node.setnParentCount(1);
-//			node.setInEdges(node.getnParentCount());
-//			node.setByActivityNodeType(node_type.SLEEP);
-//			node.setStrNextActivityCodes("");
-//			node.setWarnFlag(false);
-//
-//			if (!listAOV.containsKey(node.getnActivityCode()))
-//				listAOV.put(node.getnActivityCode(), node);
-//		}
-//		else if(treeId == 3){
-//			//初始化父亲节点 判断电站状态
-//			node = new ActivityNode();
-//			node.Init();
-//			node.setTreeId(treeId);
-//			node.setnAcitivityID(1);
-//			node.setnActivityCode(1);
-//			node.setnParentCount(0);
-//			node.setInEdges(node.getnParentCount());
-//			node.setByActivityNodeType(node_type.FINISHED);
-//			node.setStrNextActivityCodes("2,3");
-//			node.setDataAddress("6");
-//			node.setWarnFlag(false);
-//			if(!listAOV.containsKey(node.getnActivityCode()))
-//				listAOV.put(node.getnActivityCode(), node);
-//			ArrayList<NodeRule> ruleList = new ArrayList<NodeRule>(); //Judge rules 判断依据
-//			NodeRule rule = new NodeRule();
-//			rule.setCONDITIONS(3); //3代表等于
-//			rule.setJUDGE_VALUE("0"); //1代表值 如果为1则true 否则0false
-//			rule.setGOTO_ACTIVITY(2);
-//			ruleList.add(rule);
-//			rule = new NodeRule();
-//			rule.setCONDITIONS(3); //3代表等于
-//			rule.setJUDGE_VALUE("1"); //1代表值 如果为1则true 否则0false
-//			rule.setGOTO_ACTIVITY(3);
-//			ruleList.add(rule);
-//			node.setRuleList(ruleList);
-//
-//
-//			//2.初始化子节点 电站状态正常后逆变器状态
-//			node = new ActivityNode();
-//			node.Init();
-//			node.setTreeId(3);
-//			node.setnAcitivityID(2);
-//			node.setnActivityCode(2);
-//			node.setnParentCount(1);
-//			node.setInEdges(node.getnParentCount());
-//			node.setByActivityNodeType(node_type.SLEEP);
-//			node.setStrNextActivityCodes("");
-//			node.setDataAddress("5");
-//			node.setWarnFlag(true);
-//			node.setWarnSourceId(1001);//配置告警对应的部件参数（warn_source表中warn_id）
-//			if (!listAOV.containsKey(node.getnActivityCode()))
-//				listAOV.put(node.getnActivityCode(), node);
-//
-//
-//			//电站状态 通讯异常节点
-//			node = new ActivityNode();
-//			node.Init();
-//			node.setTreeId(3);
-//			node.setnActivityCode(3);
-//			node.setnAcitivityID(3);
-//			node.setnParentCount(1);
-//			node.setInEdges(node.getnParentCount());
-//			node.setByActivityNodeType(node_type.SLEEP);
-//			node.setStrNextActivityCodes("");
-//			node.setWarnFlag(false);
-//
-//			if (!listAOV.containsKey(node.getnActivityCode()))
-//				listAOV.put(node.getnActivityCode(), node);
-//		}
-//		else if(treeId == 4){
-//			//初始化父亲节点 判断单个电表当前是否存在scada来源的告警。
-//			node = new ActivityNode();
-//			node.Init();
-//			node.setTreeId(treeId);
-//			node.setnAcitivityID(1);
-//			node.setnActivityCode(1);
-//			node.setnParentCount(0);
-//			node.setInEdges(node.getnParentCount());
-//			node.setByActivityNodeType(node_type.FINISHED);
-//			node.setStrNextActivityCodes("2,3");
-//			//判断该电表是否当前存在scada来源的告警
-//			node.setDataAddress("9");
-//			node.setWarnFlag(false);
-//			if(!listAOV.containsKey(node.getnActivityCode()))
-//				listAOV.put(node.getnActivityCode(), node);
-//			ArrayList<NodeRule> ruleList = new ArrayList<NodeRule>(); //Judge rules 判断依据
-//			NodeRule rule = new NodeRule();
-//			rule.setCONDITIONS(3); //3代表等于
-//			rule.setJUDGE_VALUE("0"); //1代表值 如果为1则true(表示有来自scada的告警) 否则0false
-//			rule.setGOTO_ACTIVITY(2);
-//			ruleList.add(rule);
-//			rule = new NodeRule();
-//			rule.setCONDITIONS(3); //3代表等于
-//			rule.setJUDGE_VALUE("1"); //1代表值 如果为1则true 否则0false
-//			rule.setGOTO_ACTIVITY(3);
-//			ruleList.add(rule);
-//			node.setRuleList(ruleList);
-//
-//
-//			//电表当前无告警，判断电表更新时间。
-//			node = new ActivityNode();
-//			node.Init();
-//			node.setTreeId(treeId);
-//			node.setnAcitivityID(2);
-//			node.setnActivityCode(2);
-//			node.setnParentCount(1);
-//			node.setInEdges(node.getnParentCount());
-//			node.setByActivityNodeType(node_type.SLEEP);
-//			node.setStrNextActivityCodes("4,5");
-//			node.setDataAddress("7");//判断电表设备最新数据时间。
-//			node.setWarnFlag(true);
-//			node.setWarnSourceId(1010);//配置告警对应的部件参数（pm_warn_source表中warn_id）
-//			if(!listAOV.containsKey(node.getnActivityCode()))
-//				listAOV.put(node.getnActivityCode(), node);
-//			ruleList = new ArrayList<NodeRule>(); //Judge rules 判断依据
-//			rule = new NodeRule();
-//			rule.setCONDITIONS(3); //3代表等于
-//			rule.setJUDGE_VALUE("0"); //1代表值 如果为1则true 否则0false
-//			rule.setGOTO_ACTIVITY(4);
-//			ruleList.add(rule);
-//			rule = new NodeRule();
-//			rule.setCONDITIONS(3); //3代表等于
-//			rule.setJUDGE_VALUE("1"); //1代表值 如果为1则true 否则0false
-//			rule.setGOTO_ACTIVITY(5);
-//			ruleList.add(rule);
-//			node.setRuleList(ruleList);
-//
-//			//初始化子节点 电表有scada来源的告警，则不进行任何处理。
-//
-//
-//			node = new ActivityNode();
-//			node.Init();
-//			node.setTreeId(treeId);
-//			node.setnActivityCode(3);
-//			node.setnAcitivityID(3);
-//			node.setnParentCount(1);
-//			node.setInEdges(node.getnParentCount());
-//			node.setByActivityNodeType(node_type.SLEEP);
-//			node.setStrNextActivityCodes("");
-//			node.setWarnFlag(false);
-//
-//			if (!listAOV.containsKey(node.getnActivityCode()))
-//				listAOV.put(node.getnActivityCode(), node);
-//
-//			//4初始化子节点 判断设备状态
-//			node = new ActivityNode();
-//			node.Init();
-//			node.setTreeId(treeId);
-//			node.setnAcitivityID(4);
-//			node.setnActivityCode(4);
-//			node.setnParentCount(1);
-//			node.setInEdges(node.getnParentCount());
-//			node.setByActivityNodeType(node_type.SLEEP);
-//			node.setStrNextActivityCodes("");
-//			node.setDataAddress("8");
-//			node.setWarnFlag(true);
-//			node.setWarnSourceId(1011);//配置告警对应的部件参数（warn_source表中warn_id）
-//			if (!listAOV.containsKey(node.getnActivityCode()))
-//				listAOV.put(node.getnActivityCode(), node);
-//
-//
-//			//电站状态
-//			node = new ActivityNode();
-//			node.Init();
-//			node.setTreeId(treeId);
-//			node.setnActivityCode(5);
-//			node.setnAcitivityID(5);
-//			node.setnParentCount(1);
-//			node.setInEdges(node.getnParentCount());
-//			node.setByActivityNodeType(node_type.SLEEP);
-//			node.setStrNextActivityCodes("");
-//			node.setWarnFlag(false);
-//
-//			if (!listAOV.containsKey(node.getnActivityCode()))
-//				listAOV.put(node.getnActivityCode(), node);
-//		}
-//		return true;
-	}
 
-	//供定时器调用
-	public void allDecision()
+
+
+
+	/**
+	 * 运行决策树程序
+	 * 得到符合定时信号类型的决策树，通过决策树信息获取所有符合该决策树决策的设备
+	 * @Author 史善力
+	 * @date 2020年12月23日20:55:39
+	 * @param timerType 定时信号类型，有可能是5分钟信号，1小时信号，24小时信号
+	 */
+	public void runDeviceDecision(int timerType)
 	{
 		Calendar today = new GregorianCalendar(TimeZone.getTimeZone("GMT+8"));
-		today.setTimeInMillis(Calendar.getInstance().getTimeInMillis());
-		int today_minute = today.get(Calendar.MINUTE);
-		int today_sec = today.get(Calendar.SECOND);
-		int today_hour = today.get(Calendar.HOUR_OF_DAY);
-		// ------------------ 开始执行 ---------------------------
-		System.out.println("getPVDecision start"+ today_hour+":"+today_minute+":"+today_sec);
-
-		//先获取所有的电站信息
-//		List<Changzhan> list = decisionDao.getContainer(0,0,0);
-		List<StationInfo>  stationList = decisionDao.getStationData("", "", "4", 1, 0, 0);
-		List<Device> deviceList = new ArrayList<Device>();
-		for(StationInfo item:stationList)
-		{
-//			if(item.getChangZhanID()==686){
-
-			Device dev = new Device();
-			dev.setId(item.getChangZhanID());
-			dev.setName(item.getStationName());
-			deviceList.add(dev);
-//			}
-		}
-		//1.最初决策树；2.****；3.组串电流为0告警，电表日数据离散率比较大告警 By ZhangSC
-		BFSAll(deviceList,1);
-
-		// ------------------ 结束执行 ---------------------------
-		System.out.println("getDecision end"+ today_hour+":"+today_minute+":"+today_sec);
-	}
-	/*
-	@timerType  时间信号
-	 */
-	public void allDeviceDecision(int timerType)
-	{ 	//获取当前的北京时间，“GMT+8”就是北京时间，
-		Calendar today = new GregorianCalendar(TimeZone.getTimeZone("GMT+8"));
-		//Calendar.getInstance();//创一个日期的实例，获取到日期的毫秒显示形式
 		today.setTimeInMillis(Calendar.getInstance().getTimeInMillis());
 		int today_minute = today.get(Calendar.MINUTE);//获取当前的分钟
 		int today_sec = today.get(Calendar.SECOND);
 		int today_hour = today.get(Calendar.HOUR_OF_DAY);
 		// ------------------ 开始执行 ---------------------------
 		System.out.println("getDecision start"+ today_hour+":"+today_minute+":"+today_sec);
-		//从数据库中获取所有类型的树
-		List<DeviceParm> treeIdInfoList = initTreeDao.getTreeWarnInterval(timerType);
+		//从数据中取出所有符合信号类型的有效决策树
+		List<DeviceParm> treeIdInfoList = decisionTreePmsDao.listDecisionTree(timerType);
 		for(DeviceParm deviceParm:treeIdInfoList){
-			//先获取所有的设备信息;deviceId：设备ID、deviceType：设备类型、deviceType：区域类型。
+			//获取所有符合该决策树设备ID、设备类型、区域类型的设备信息;
 //			List<DeviceInfo> deviceInfoList = decisionDao.getDeviceInfo(deviceParm.getDeviceId(),deviceParm.getDeviceType(),deviceParm.getBujianType());
+			//利用源深目前的一些数据进行测试
 			List<DeviceInfo> deviceInfoList = decisionDao.getYuanshenTest();
 			List<Device> deviceList = new ArrayList<Device>();
 			for(DeviceInfo item:deviceInfoList)
 			{
-				//if(item.getChangZhanID()==686){
-
 				Device dev = new Device();
 				//新的list只存设备id和设备名字
 				dev.setId(item.getDeviceId());
@@ -871,8 +482,7 @@ public class DecisionEngineService{ private InitTreeDao initTreeDao = new InitTr
 //			dev.setId(item.getDeviceId());
 //			dev.setName(item.getDeviceName());
 //			deviceList.add(dev);
-
-			//1.最初决策树；2.****；3.电站数据维持不变推电站通讯关闭告警 By ZhangSC
+			//利用决策树对设备列表进行依次决策
 			BFSAll(deviceList,deviceParm.getTreeId());
 		}
 

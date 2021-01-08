@@ -6,6 +6,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+/**
+ * 完成了druid数据源的初始化并给jdbcTemplate赋值
+ * @author shishanli
+ * @date 2021年1月4日00:04:18
+ */
 public class JdbcTemplateUtils {
     public static DruidDataSource dataSourceMs;
     public static DruidDataSource dataSourcePms;

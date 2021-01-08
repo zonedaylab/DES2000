@@ -8,36 +8,37 @@ import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer011;
-import java.time.LocalDateTime;
+
 import java.util.Properties;
 import static cn.zup.iot.common.utils.KafkaConfigUtil.buildKafkaProps;
 
+/**
+ * 基于flink定时消息生成的5分钟存盘信号,执行从redis取出数据后批量存到清洗表语句
+ * 数据来源：第一数据来源为读取redis数据；第二数据来源为清洗数据表；第三数据来源为基础数据表
+ * @author 史善力
+ * @date 2020年12月23日14:10:17
+ */
 public class FlinkKafkaTimerdbsave{
 
     public static void main(String[] args) throws Exception {
         //获取所有参数
         final ParameterTool parameterTool = ExecutionEnvUtil.createParameterTool(args);
-        ////获得上下文环境
+        //获得上下文环境
         StreamExecutionEnvironment env = ExecutionEnvUtil.prepare(parameterTool);
         env.setParallelism(1);
         Properties props = buildKafkaProps(parameterTool);
-        //从kafka里获取定时信号
+        //作为一个消费者从kafka特定topic中取信号
         FlinkKafkaConsumer011<Timer> consumer = new FlinkKafkaConsumer011<Timer>(props.getProperty(PropertiesConstants.KAFKA_TOPIC_ID),
                 new TypeInformationSerializationSchema<Timer>(TypeInformation.of(Timer.class), env.getConfig()),
                 props);
         SingleOutputStreamOperator<Timer> filterSource = env.addSource(consumer).filter(Timer -> {
-            //过滤出信号为3，即5分钟信号
+            //每当kafka中有一个5分钟消息来到就把Redis数据批量存储到mysql
             if(Timer.getTimerType()==2){
-                System.out.println("5分钟存盘");
-                System.out.println("存盘前时间："+LocalDateTime.now());
-                System.out.println("定时信号存入的时间"+Timer.getTimerTime());
+                System.out.println("开始5分钟存盘");
                 long t00 = System.currentTimeMillis();
-                //将数据从redis取出并存放到
-                BatchToMysql getRedisToMysql = new BatchToMysql();
-//                GetRedisToMysql getRedisToMysql = new GetRedisToMysql();
-                if(getRedisToMysql.GetRedis(Timer.getTimerTime())){
+                RedisBatchToMysql redisBatchToMysql = new RedisBatchToMysql();
+                if(redisBatchToMysql.getRedisBatchToMysql(Timer.getTimerTime())){
                     System.out.println("存盘成功");
-                    System.out.println("存盘后时间："+LocalDateTime.now());
                     long t01 = System.currentTimeMillis();
                     System.out.println("共花费"+ (t01-t00)+"ms");
                 }else {
@@ -47,7 +48,7 @@ public class FlinkKafkaTimerdbsave{
             }
             return false;
         });
-        env.execute("flink kafka To Mysql");
+        env.execute("flink kafka from Redis To Mysql");
     }
 
 }

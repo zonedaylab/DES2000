@@ -20,7 +20,11 @@ import cn.zup.iot.common.utils.KafkaConfigUtil;
 
 import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
+/**
+ * 基于flink产生定时信号存入kafka的定时信号topic中
+ * @Author 史善力
+ * @date 2020年12月23日18:48:03
+ */
 public class FlinkKafkaProducer {
     //创建新的随机数生成器
     public static final Random random = new Random();
@@ -30,14 +34,10 @@ public class FlinkKafkaProducer {
         final ParameterTool parameterTool = ExecutionEnvUtil.createParameterTool(args);
         //获得上下文环境
         StreamExecutionEnvironment env = ExecutionEnvUtil.prepare(parameterTool);
-        //设置基本的kafka配置
+        //加载kafka参数配置库
         Properties props = KafkaConfigUtil.buildKafkaProps(parameterTool);
         env.setParallelism(1);
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.HOUR_OF_DAY, 12); // 控制时
-        calendar.set(Calendar.MINUTE, 0);    // 控制分
-        calendar.set(Calendar.SECOND, 0);    // 控制秒
-        //Flink 中你可以使用 StreamExecutionEnvironment.addSource(sourceFunction) 来为你的程序添加数据来源。
+        //将产生的信号当做flink的数据源
         DataStreamSource<Timer> dataStreamSource = env.addSource(new SourceFunction<Timer>() {
             @Override
             public void run(SourceContext<Timer> sourceContext) throws Exception {
@@ -80,14 +80,11 @@ public class FlinkKafkaProducer {
             public void cancel() {}
 
             });
-        //sink 有点把数据存储到kafka的意思，下面有kafka的地址和topicic
+        //将flink处理后的数据sink到kafka中
         dataStreamSource.addSink(new FlinkKafkaProducer011<Timer>(
-            //KAFKA_BROKERS = "kafka.brokers";"localhost:9092"
             props.getProperty(PropertiesConstants.KAFKA_BROKERS),
-            // DEFAULT_KAFKA_TOPIC_ID = "event_test";kafka.topic.id=event_test
             props.getProperty(PropertiesConstants.KAFKA_TOPIC_ID),
             new TypeInformationSerializationSchema<Timer>(TypeInformation.of(Timer.class), env.getConfig()))).name("flink-kafka-random-event-Producer");
-        dataStreamSource.print();
         try {
             env.execute("flink-kafka-random-event-Producer");
         } catch (Exception e) {

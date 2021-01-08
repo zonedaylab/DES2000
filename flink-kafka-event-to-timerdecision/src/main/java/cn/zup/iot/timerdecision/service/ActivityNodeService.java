@@ -1,10 +1,8 @@
 package cn.zup.iot.timerdecision.service;
 
-import cn.zup.iot.timerdecision.dao.DecisionDao;
-import cn.zup.iot.timerdecision.dao.InitTreeDao;
+import cn.zup.iot.timerdecision.dao.DecisionTreePmsDao;
 import cn.zup.iot.timerdecision.model.*;
 
-import javax.xml.crypto.Data;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -33,24 +31,34 @@ import java.util.*;
 public class ActivityNodeService{
 
 	private DataAdressService dataAddressService = new DataAdressService();
-	private InitTreeDao initTreeDao = new InitTreeDao();
+	private DecisionTreePmsDao decisionTreePmsDao = new DecisionTreePmsDao();
 	ActivityNode node = new ActivityNode();
 
-	//pop()出每一个节点，并更改节点属性
+	/**
+	 * 判断该节点的状态，如果该节点的状态是sleep的，再判断该节点的父母节点死亡数量(nParentBranchDiedCount)，如果和父母节点数量相同，则将状态置为died
+	 * 如果该节点的父母节点活跃数量(nParentBranchActiveCount)大于0,则将状态置为finished
+	 * 因为决策路线只执行finished的节点
+	 * @author shishanli
+	 * @date 2021年1月6日00:04:35
+	 * @param listAOV
+	 * @param device
+	 */
 	public final void ChangeActivityProperty(HashMap<Integer, ActivityNode> listAOV, Device device) {
-		//为这个节点设置哪个设备
+		//为节点设备的属性值初始化，用于对该设备执行具体业务方法
 		node.setDevice(device);
 		//取出子节点的字节码
 		String[] nextAllBraches = node.getStrNextActivityCodes().split("[,]", -1);
-		//判断该节点的NodeType()类型，是sleep，died，还是finished
+		//判断该节点的NodeType()类型，是sleep，died，还是finished，主要是找到找到他的子节点，并且把将要走的子节点的类型定义为finished
 		switch (node.getByActivityNodeType()) {
 			case "SLEEP":
 				if (node.getnParentCount() > 0) {
-					//如果父分支休眠数量>0, 更新子节点状态为SLEEP
+					//如果父分支休眠数量>0, 更新子节点状态为SLEEP，这个后面没对nParentBranchSleepCount初始化，所以不运行这个程序
 					if (node.getnParentBranchSleepCount() > 0) {
-						if (node.getStrNextActivityCodes().length() > 0)
-							for (String branch : nextAllBraches)
+						if (node.getStrNextActivityCodes().length() > 0) {
+							for (String branch : nextAllBraches) {
 								listAOV.get(Integer.parseInt(branch)).setByActivityNodeType("SLEEP");
+							}
+						}
 						return;
 					}
 					//如果父分支已经全部僵死，则转化为僵死状态，
@@ -58,20 +66,23 @@ public class ActivityNodeService{
 					if (node.getnParentBranchDiedCount() == node.getnParentCount()) {
 						node.setByActivityNodeType("DIED");
 						if (node.getStrNextActivityCodes().length() > 0) //没有子节点
-							for (String branch : nextAllBraches)
+						{
+							for (String branch : nextAllBraches) {
 								listAOV.get(Integer.parseInt(branch)).setnParentBranchDiedCount(listAOV.get(Integer.parseInt(branch)).getnParentBranchDiedCount() + 1);
+							}
+						}
 					}
 					//三 如果父分支节点休眠数量=0，激活数量>0,
 					//即：父亲分支数量=父分支激活数量+父分支僵死数量，则跳转到2激活状态
 					else if (node.getnParentBranchActiveCount() > 0) {
 						node.setByActivityNodeType("FINISHED");
 						//执行finish功能
-						NodeFinish(listAOV);
+						nodeFinish(listAOV);
 					}
 				}
 				break;
 			case "FINISHED"://第一个节点默认为finished
-				NodeFinish(listAOV);
+				nodeFinish(listAOV);
 				break;
 			case "DIED":
 				if (node.getStrNextActivityCodes().length() > 0) {
@@ -84,21 +95,30 @@ public class ActivityNodeService{
 		return;
 	}
 
-	///节点结束处理工作
-	void NodeFinish(HashMap<Integer, ActivityNode> listAOV) {
+	/**
+	 * 对类型为finished的节点执行决策业务方法，并将返回值赋值给该节点，并根据返回的ActrualValue、判断条件、判断依据找到流转节点
+	 * 如果找到流转节点，则对该节点的nParentBranchActiveCount（父母活跃节点数量）+1
+	 * 如果找不到流转节点，则对该节点的nParentBranchDiedCount（父母死亡节点数量）+1
+	 * 因为前面是对所有的节点进行遍历，而决策路线只走nParentBranchActiveCount>0的，nParentBranchDiedCount=父母节点数量的不走
+	 * @author shishanli
+	 * @date 2021年1月5日23:57:16
+	 * @param listAOV
+	 */
+	void nodeFinish(HashMap<Integer, ActivityNode> listAOV) {
 		//父亲节点完成，子分支可能会转化为僵死或者激活状态
 
-		//根据设该节点，得到
-		DecisionResult result = GetNodeData();
-		//result.getActrualValue()，返回0代表正常，返回1代表不正常
+		//返回该节点决策业务方法的执行结果
+		DecisionResult result = getNodeData();
+		//actrualValue，返回0代表正常，返回1代表不正常
 		node.setActrualValue(result.getActrualValue());
-		//只有在ActrualValue为1的情况下，才有异常信息
+		//只有在actrualValue为1的情况下，才有异常信息
 		node.setMessage(result.getMessage());
-		//下面是取出所有的规则，二叉树有两个规则
+		//下面是取出该节点所有规则信息
 		for (NodeRule rule : node.getRuleList()) {
-			//如果判断值的长度为0，就结束此次循环，开始下次循环
-			if (rule.getJUDGE_VALUE().length() == 0)
+			//如果判断值的长度为0（为空），就结束此次循环，开始下次循环
+			if (rule.getJUDGE_VALUE().length() == 0) {
 				continue;
+			}
 			double value;//数值型判断条件
 			ConditionType conditon = ConditionType.valueOf(rule.getCONDITIONS());
 			boolean bConditionFlag = false;
@@ -106,42 +126,52 @@ public class ActivityNodeService{
 			switch (conditon) {
 				case MoreThan:                                       //1.大于
 					value = Double.parseDouble(node.getActrualValue());
-					if (value > Double.parseDouble(rule.getJUDGE_VALUE()))
+					if (value > Double.parseDouble(rule.getJUDGE_VALUE())) {
 						bConditionFlag = true;
+					}
 					break;
 				case MoreThanOrEqual:                                //2.大于且等于
 					value = Double.parseDouble(node.getActrualValue());
-					if (value >= Double.parseDouble(rule.getJUDGE_VALUE()))
+					if (value >= Double.parseDouble(rule.getJUDGE_VALUE())) {
 						bConditionFlag = true;
+					}
 					break;
 				case Equal:                                          //3.等于
 					value = Double.parseDouble(node.getActrualValue());
-					if (value == Double.parseDouble(rule.getJUDGE_VALUE()))
+					if (value == Double.parseDouble(rule.getJUDGE_VALUE())) {
 						bConditionFlag = true;
+					}
 					break;
 				case LessThan:                                       //4.小于
 					value = Double.parseDouble(node.getActrualValue());
-					if (value < Double.parseDouble(rule.getJUDGE_VALUE()))
+					if (value < Double.parseDouble(rule.getJUDGE_VALUE())) {
 						bConditionFlag = true;
+					}
 					break;
 				case LessThanOrEqual:                                //5.小于且等于
 					value = Double.parseDouble(node.getActrualValue());
-					if (value <= Double.parseDouble(rule.getJUDGE_VALUE()))
+					if (value <= Double.parseDouble(rule.getJUDGE_VALUE())) {
 						bConditionFlag = true;
+					}
 					break;
 				case Contain:                                        //6.包含
-					if (node.getActrualValue().contains(rule.getJUDGE_VALUE()))
+					if (node.getActrualValue().contains(rule.getJUDGE_VALUE())) {
 						bConditionFlag = true;
+					}
 					break;
 				case NoContain:                                      //7.不包含
-					if (!node.getActrualValue().contains(rule.getJUDGE_VALUE()))
+					if (!node.getActrualValue().contains(rule.getJUDGE_VALUE())) {
 						bConditionFlag = true;
+					}
 					break;
 			}
 			if (bConditionFlag)//如果判据满足，则激活一次，获取该节点并设置父母分支活跃节点+1
+			{
 				listAOV.get(rule.getGOTO_ACTIVITY()).setnParentBranchActiveCount(listAOV.get(rule.getGOTO_ACTIVITY()).getnParentBranchActiveCount() + 1);
-			else//不满足，则死亡一次，获取该节点并设置父母死亡节点节点+1
+			} else//不满足，则死亡一次，获取该节点并设置父母死亡节点节点+1
+			{
 				listAOV.get(rule.getGOTO_ACTIVITY()).setnParentBranchDiedCount(listAOV.get(rule.getGOTO_ACTIVITY()).getnParentBranchDiedCount() + 1);
+			}
 		}
 	}
 
@@ -154,19 +184,19 @@ public class ActivityNodeService{
 		}
 	}
 
-	//返回节点的当前数据
-	public DecisionResult GetNodeData(){
-		//获取故障信息
-		Device device = node.getDevice();//设备信息
+	/**
+	 * 判断该节点有无业务方法，如果无就返回空值，有就对节点执行具体业务方法（决策），看是否出现问题，并返回执行的结果
+	 * @author shishanli
+	 * @date 2021年1月5日22:20:53
+	 * @return DecisionResult ActrualValue属性为0时代表正常，为1时代表不正常，如果为1时，Message属性会含有故障信息
+	 */
+	public DecisionResult getNodeData(){
+		//获取节点的设备
+		Device device = node.getDevice();
 		DecisionResult result = new DecisionResult();
-		//DataAddress，
+		//如果该节点没有业务方法就不执行，直接返回空置，如果有就根据节点业务方法的地址进行调用
 		if (Integer.valueOf(node.getDataAddress()) != 0) {
-			/**
-			 * 进行对应决策
-			 * result结果为null，则决策正常，反之，结果不正常
-			 * 根据决策树配置页面的Data
-			 */
-			Map<String,String> dataAdressMap = initTreeDao.getAddress();
+			Map<String,String> dataAdressMap = decisionTreePmsDao.getAddress();
 			try{
 				Class dataAdressClass = dataAddressService.getClass();
 				Method method = dataAdressClass.getMethod(dataAdressMap.get(node.getDataAddress()),Device.class, Date.class);

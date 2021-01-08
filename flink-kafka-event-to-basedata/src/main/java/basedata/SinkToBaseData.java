@@ -16,22 +16,19 @@ import java.util.Properties;
 import java.util.TimeZone;
 
 /**
- * Desc:
- * weixin: zhisheng_tian
- * blog: http://www.54tianzhisheng.cn/
+ * sink到基础表中
+ * @author shishanli
+ * @date 2021年1月3日20:15:53
  */
 public class SinkToBaseData extends RichSinkFunction<DataEvent> {
     private DruidDataSource dataSourceLs;
-    private Connection connectionLs;
-    private PreparedStatement psLs;
-    private Statement stmntLs;
-    private ResultSet resultSetLs;
     private Properties properties;
     private JdbcTemplate jdbcTemplateLs;
 
     /**
-     * open() 方法中建立连接，这样不用每次 invoke 的时候都要建立连接和释放连接
-     *
+     * open() 方法中建立连接，这样不用每次 invoke 的时候都要建立连接和释放连接，每次运行时建立一次
+     * @author 2021年1月5日00:42:57
+     * @date 2021年1月5日00:43:42
      * @param parameters
      * @throws Exception
      */
@@ -58,22 +55,29 @@ public class SinkToBaseData extends RichSinkFunction<DataEvent> {
         jdbcTemplateLs = new JdbcTemplate(dataSourceLs);
     }
 
+    /**
+     * close()关闭连接
+     * @author shishanli
+     * @date 2021年1月5日00:44:26
+     * @throws Exception
+     */
     @Override
     public void close() throws Exception {
         super.close();
     }
 
     /**
-     * 每条数据的插入都要调用一次 invoke() 方法
-     *
-     * @param value
+     * kafka中有一条数据就会调用一次invoke()方法
+     * @author shishanli
+     * @date 2021年1月5日00:45:40
+     * @param dataEvent
      * @param context
      * @throws Exception
      */
     @Override
-    public void invoke(DataEvent value, Context context) throws Exception {
+    public void invoke(DataEvent dataEvent, Context context) throws Exception {
         long t1 = System.currentTimeMillis();
-        LocalDateTime localDateTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(value.getEventTime()), TimeZone.getDefault().toZoneId());
+        LocalDateTime localDateTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(dataEvent.getEventTime()), TimeZone.getDefault().toZoneId());
         int year = localDateTime.getYear();
         int month = localDateTime.getMonthValue();
         int day = localDateTime.getDayOfMonth();
@@ -92,26 +96,36 @@ public class SinkToBaseData extends RichSinkFunction<DataEvent> {
                 + "valueFlag int(11) DEFAULT NULL,"
                 + "PRIMARY KEY (DataTime,BuJianLeiXingID,BuJianID,BuJianCanShuID,ChangZhanID)"
                 + ") ENGINE=InnoDB DEFAULT CHARSET=utf8;";
+        //如果不存在该表就创建该表
         jdbcTemplateLs.execute(createBrandDatabase);
         String datatime = String.valueOf(year)+"-"+String.format("%02d",month)+"-"+String.format("%02d",day)+" "+String.format("%02d",hour)+"-"+String.format("%02d",minute)+"-"+String.format("%02d",second);
-        insertBaseData(tablename,datatime,value);
+        insertBaseData(tablename,datatime,dataEvent);
         long t2 = System.currentTimeMillis();
         System.out.println("sink一次时间为："+(t2-t1));
     }
 
-    public void insertBaseData(String tablename,String datatime,DataEvent value){
+    /**
+     * 将传来的数据插入到基础表中
+     * @author shishanli
+     * @date 2021年1月5日00:46:40
+     * @param tablename
+     * @param datatime
+     * @param dataEvent
+     */
+    public void insertBaseData(String tablename,String datatime,DataEvent dataEvent){
         StringBuffer sql1 = new StringBuffer();
         sql1.append(" insert DELAYED into "+tablename);
         sql1.append("(DataTime, BuJianLeiXingID, BuJianID, BuJianCanShuID, ChangZhanID,value,valueFlag) values(?,?,?,?,?,?,?)");
         System.out.println(sql1);
         jdbcTemplateLs.update(String.valueOf(sql1),new PreparedStatementSetter(){
+            @Override
             public void setValues(PreparedStatement ps) throws SQLException {
                 ps.setString(1,datatime);
-                ps.setInt(2,value.getComponentType());
-                ps.setInt(3,value.getComponentId());
-                ps.setInt(4,value.getComponentParamId());
-                ps.setInt(5,value.getStationId());
-                ps.setDouble(6,Double.valueOf(value.getDataValue()));
+                ps.setInt(2,dataEvent.getComponentType());
+                ps.setInt(3,dataEvent.getComponentId());
+                ps.setInt(4,dataEvent.getComponentParamId());
+                ps.setInt(5,dataEvent.getStationId());
+                ps.setDouble(6,Double.valueOf(dataEvent.getDataValue()));
                 ps.setDouble(7,0);
             }
         });

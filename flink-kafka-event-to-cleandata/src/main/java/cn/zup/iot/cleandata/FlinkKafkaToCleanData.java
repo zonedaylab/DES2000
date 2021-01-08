@@ -17,7 +17,11 @@ import java.util.Properties;
 
 import static cn.zup.iot.common.utils.KafkaConfigUtil.buildKafkaProps;
 
-
+/**
+ * 基于flink将kafka的消息持久化到清洗表(kwhdata*)中
+ * @author shishanli
+ * @date 2021年1月3日19:43:38
+ */
 public class FlinkKafkaToCleanData {
     public static void main(String[] args) throws Exception {
         //获取所有参数
@@ -32,11 +36,11 @@ public class FlinkKafkaToCleanData {
         props.put("group.id", "flink kafka To mysql");
 
         SingleOutputStreamOperator<DataEvent> dataStreamSource = env.addSource(new FlinkKafkaConsumer011<>(
-                props.getProperty(PropertiesConstants.KAFKA_TOPIC_ID),   //这个 kafka topic_id取的是application.properties
+                props.getProperty(PropertiesConstants.KAFKA_TOPIC_ID),
                 new SimpleStringSchema(),
                 props)).setParallelism(1)
-                .map(string -> JSON.parseObject(string, DataEvent.class)); //Fastjson 解析字符串成 DataEvent 对象
+                .map(string -> JSON.parseObject(string, DataEvent.class));
         dataStreamSource.addSink(new SinkToCelanData());
-        env.execute("flink kafka To mysql");
+        env.execute("flink kafka To cleanMysql");
     }
 }

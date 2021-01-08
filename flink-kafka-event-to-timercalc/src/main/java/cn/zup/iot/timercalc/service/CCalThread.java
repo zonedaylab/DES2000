@@ -1,18 +1,13 @@
 package cn.zup.iot.timercalc.service;
-
-import cn.zup.iot.common.model.DataEvent;
 import cn.zup.iot.timercalc.dao.CalcDao;
 import cn.zup.iot.timercalc.dao.DataDao;
-import cn.zup.iot.timercalc.data_struct.cal_param;
 import cn.zup.iot.timercalc.model.CalcConfig;
 import cn.zup.iot.timercalc.model.CalcParamConfig;
 import cn.zup.iot.timercalc.model.DataStructure;
-import cn.zup.iot.timercalc.model.EnergyData;
 import cn.zup.iot.timercalc.util.JdbcTemplateUtils;
 import cn.zup.iot.timercalc.util.JedisUtil;
 import org.springframework.jdbc.core.JdbcTemplate;
 import redis.clients.jedis.Jedis;
-
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
@@ -26,21 +21,13 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
-/*************************************************************************
-
-* 项目名称
-* 文件名称： 定计算任务线程
-* 描    述：
-*
-
-*
-*
-************************************************************************/
+/**
+ * 运行计算服务
+ * @author shishanli
+ * @date 2021-1-3 22:46:27
+ */
 public class CCalThread{
 
-//	//创建计算中flag;
-//	private boolean calcingFlag = false;
 	private CalcDao calcDao = new CalcDao();
 	private DataDao dataDao = new DataDao();
 	private Jedis jedis = JedisUtil.jedisPool.getResource();
@@ -48,41 +35,26 @@ public class CCalThread{
 	private Connection conn;
 	private Statement stmt;
 
+
 	/**
-	 * @author ZhangSC
-	 * 针对源深项目重写计算服务
-	 * 0点作为起始点，0点之后为今天的数据
-	 *
+	 * 计算服务开始
+	 * @author shishanli
+	 * @date 2021年1月5日00:49:53
+	 * @param localDateTime
 	 */
 	public void timingCalc(LocalDateTime localDateTime) throws SQLException {
-		System.out.println(localDateTime);
-		//int minuteParam = 300000;
 		Calendar today = GregorianCalendar.from(ZonedDateTime.of(localDateTime, ZoneId.systemDefault()));
-		int today_minute = today.get(Calendar.MINUTE);
-		int today_sec = today.get(Calendar.SECOND);
-		int today_hour = today.get(Calendar.HOUR_OF_DAY);
-		// ------------------ 开始执行 ---------------------------
-		System.out.println("定时计算服务开始"+ today_hour+":"+today_minute+":"+today_sec);
-
-		today_minute -= today_minute%5;
-		today.set(Calendar.MINUTE,today_minute);
-		timingCalcFun(today);
-	}
-
-	/**
-	 * author ZhangSC
-	 * 计算函数
-	 * @param today
-	 */
-	public void timingCalcFun(Calendar today) throws SQLException {
 		int today_year = today.get(Calendar.YEAR);
 		int today_month = today.get(Calendar.MONTH) + 1;
 		int today_day = today.get(Calendar.DAY_OF_MONTH);
 		int today_hour = today.get(Calendar.HOUR_OF_DAY);
 		int today_minute = today.get(Calendar.MINUTE);
-		today_minute = today_minute%5;
+		int today_sec = today.get(Calendar.SECOND);
+		System.out.println("定时计算服务开始"+ today_hour+":"+today_minute+":"+today_sec);
+		//datatime格式为 2020-01-03 00:26:00
 		String datatime = String.valueOf(today_year)+"-"+String.format("%02d",today_month)+"-"+String.format("%02d",today_day)+" "+String.format("%02d",0)+"-"+String.format("%02d",today_minute)+"-"+String.format("%02d",0);
-		//获取所有的计算信息集合
+		//基础表所采用的的时间格式 2020-01-03 23:26:04
+		String baseDatatime = String.valueOf(today_year)+"-"+String.format("%02d",today_month)+"-"+String.format("%02d",today_day)+" "+String.format("%02d",today_hour)+"-"+String.format("%02d",today_minute)+"-"+String.format("%02d",today_sec);
 		CalcConfig calcConfig = new CalcConfig();
 		calcConfig.setStartType(1);
 		//获取calcconfig表中的所有StartType=1的信息
@@ -94,36 +66,34 @@ public class CCalThread{
 			conn.setAutoCommit(false);
 			//遍历所有的计算信息集合
 			for(CalcConfig calc: calcConfigList){
-				//calcConfigList.parallelStream().forEach(calc->{
 				String tablename = "";
 				//获取该计算信息的所有计算参数集合
 				CalcParamConfig calcParamConfig = new CalcParamConfig();
 				calcParamConfig.setCalcID(calc.getCalcID());
-				//获取calcparamconfig表中calcId=calc.getCalcID()的所有信息
+				//返回该电站下的逆变器列表
 				List<CalcParamConfig> calcParamConfigList = calcDao.getAllCalcParamsInfo(calcParamConfig);
-				//如果发现该电站下逆变器数量不为空
+				//下逆变器数量不为空
 				if(calcParamConfigList != null)
 				{
 					//获取有多少个逆变器
 					int length = calcParamConfigList.size();
 					double[] params = new double[length];
-					//遍历该计算信息的所有计算参数集合
+					//遍历逆变器
 					for (int i = 0; i < length; i++) {
-						//在这里应该将
 						//获取电量值并存放到数组中，参数为当前时间，电站信息，逆变器信息，根据calcparamconfig中的ParamStatisTyp来决定是进行日电量啊，还是月电量啊
 						System.out.println("信息集合为："+String.format("%s,%s,%s,%s",calcParamConfigList.get(i).getDeviceType(),calcParamConfigList.get(i).getDeviceID(),calcParamConfigList.get(i).getDeviceParam(),calc.getChangZhanID()));
 						String tempString = jedis.get(String.format("%s,%s,%s,%s",calcParamConfigList.get(i).getDeviceType(),calcParamConfigList.get(i).getDeviceID(),calcParamConfigList.get(i).getDeviceParam(),calc.getChangZhanID()));
 						System.out.println("从redis取出的数据为："+tempString);
 						if(tempString==null||tempString==""){
 							System.out.println("redis查不到数据，开始从数据库中查找");
-							//对每一个逆变器有可能是获取他当前时间的电量，也有可能是日电量或者月电量
+							//对每一个逆变器有可能是获取他当前时间(定时消息）的电量，也有可能是日电量或者月电量
 							params[i] = timingCalcArrayValue(today, calc, calcParamConfigList.get(i));
 						}else{
 							System.out.println("从Redis取出的值为"+params[i]);
 							params[i] = Double.parseDouble(tempString);
 						}
 					}
-					//这里面应该就是将所有的逆变器的电量求和或者相乘之类的
+					//这里面应该就是将所有的逆变器的电量求和或者相乘之类的，并得出结果
 					double resultValue = calcByFormula(today,calc,params);
 					System.out.println("原计算结果为："+resultValue);
 					//判断计算结果如果超限，则将其置为0
@@ -133,22 +103,21 @@ public class CCalThread{
 					String key = calc.getDeviceType()+","+calc.getDeviceID()+","+calc.getDeviceParam()+","+calc.getChangZhanID();
 					System.out.println("推送Redis数据为key："+key+",value为"+resultValue);
 					jedis.set(key, String.valueOf(resultValue));
-					//首先根据这个电站的信息判断操作哪个表。
-					//判断完操作哪个表之后，
 					//但是插入和更新的时间是用当前的时间（归为哪个时间段，假设是当前时间的统计，而不是日统计）、flink中传来的时间、还是取计算信息的时间
-					//将sql语句放入stmt中，然后批量操作sql
-					if(calc.getTargetTable()==1){//ycdata表
+					//对ycdata表操作
+					if(calc.getTargetTable()==1){
 						tablename = "ycdata"+String.valueOf(today_year)+String.format("%02d",today_month);
-						//查询该电站的信息在表中是否存在,利用拼接sql语句，如果存在就更新，不存在就插入。
 						addSqlBatch(tablename,datatime,today_hour,resultValue,calc);
-					}else if(calc.getTargetTable()==2){//kwhdata
+					}
+					//对kwhdata表操作
+					else if(calc.getTargetTable()==2){
 						tablename = "kwhdata"+String.valueOf(today_year)+String.format("%02d",today_month);
 						addSqlBatch(tablename,datatime,today_hour,resultValue,calc);
-
-					}else if(calc.getTargetTable()==4) {//energydata表
-						tablename = "energydata"+String.valueOf(today_year)+String.format("%02d",today_month);
-						addSqlBatch(tablename,datatime,today_hour,resultValue,calc);
-//						addBasedataSqlBatch(tablename,datatime,today_hour,resultValue,calc);
+					}
+					//对basedata表操作
+					else if(calc.getTargetTable()==4) {
+						tablename = "basedata"+String.valueOf(today_year)+String.format("%02d",today_month);
+						addBasedataSqlBatch(tablename,baseDatatime,resultValue,calc);
 					}
 				}
 			};
@@ -206,27 +175,16 @@ public class CCalThread{
 			//dateStartValue = dataDao.getThreeParamData(calcParamConfig.getDeviceType(), calcParamConfig.getDeviceID(), calcParamConfig.getDeviceParam(), calcParamConfig.getDataType(), dateStart,calcConfig.getCalcIntervalTime());
 			//获取一天中所有整点的电量
 			List<Float> startDataList =  dataDao.getThreeParamDataList(calcParamConfig.getDeviceType(), calcParamConfig.getDeviceID(), calcParamConfig.getDeviceParam(), calcParamConfig.getDataType(), dateStart,calcConfig.getCalcIntervalTime());
-			if(startDataList!=null)
+			if(startDataList!=null) {
 				for(float sData:startDataList) {
+					//遍历是从0点开始遍历的，因为list.add时是从0点开始的，而list添加和遍历是一致的，所以只要取出一个不为0的电量就可以作为昨日的电量
 					if(sData-0.1 > 0) {
 						dateStartValue = sData;
 						break;
 					}
 				}
-
-			/*if(dateNowValue -0.1 < 0) {
-				resultValue = 0;
-			}else if(dateStartValue < 0.0){
-				List<Float> startDataList =  dataDao.getThreeParamDataList(calcParamConfig.getDeviceType(), calcParamConfig.getDeviceID(), calcParamConfig.getDeviceParam(), calcParamConfig.getDataType(), dateStart,calcConfig.getCalcIntervalTime());
-				if(startDataList!=null)
-					for(float sData:startDataList) {
-						if(sData-0.1 > 0) {
-							resultValue = dateNowValue - sData;
-							break;
-						}
-					}
-			}else {
-			}*/
+			}
+			//用当前的电量减去昨日的电量就位日电量
 			resultValue = dateNowValue - dateStartValue;
 		}else if(calcParamConfig.getParamStatisType() == 2) //月统计
 		{
@@ -418,14 +376,18 @@ public class CCalThread{
 			Calendar dateStart = new GregorianCalendar(TimeZone.getTimeZone("GMT+8"));
 			dateStart.setTimeInMillis(today.getTimeInMillis());
 			int imonth = todayNew.get(Calendar.MONTH);
-			if(imonth<3)
+			if(imonth<3) {
 				dateStart.set(Calendar.MONTH, 0);
-			if(imonth>2&&imonth<6)
+			}
+			if(imonth>2&&imonth<6) {
 				dateStart.set(Calendar.MONTH, 3);
-			if(imonth>5&&imonth<9)
+			}
+			if(imonth>5&&imonth<9) {
 				dateStart.set(Calendar.MONTH, 6);
-			if(imonth>8)
+			}
+			if(imonth>8) {
 				dateStart.set(Calendar.MONTH, 9);
+			}
 			// 日
 			dateStart.set(Calendar.DAY_OF_MONTH, 1);
 			// 时
@@ -618,6 +580,13 @@ public class CCalThread{
 
 	}
 
+	/**
+	 * 判断表(基础表和清洗表）中是否有该条数据
+	 * @param tablename
+	 * @param datatime
+	 * @param value
+	 * @return int
+	 */
 	public int queryData(String tablename, String datatime, CalcConfig value){
 		StringBuffer sql = new StringBuffer();
 		sql.append(" select count(*) from "+tablename);
@@ -629,6 +598,17 @@ public class CCalThread{
 		int count = jdbcTemplateLs.queryForObject(sql.toString(), Integer.class);
 		return count;
 	}
+
+	/**
+	 * 把对清洗表（kwhdata和ycdata）操作的语句放入stmt中
+	 * @author shishanli
+	 * @param tablename
+	 * @param datatime
+	 * @param today_hour
+	 * @param resultValue
+	 * @param calc
+	 * @throws SQLException
+	 */
 	public void addSqlBatch(String tablename,String datatime,int today_hour,Double resultValue,CalcConfig calc) throws SQLException {
 		if(queryData(tablename,datatime,calc)>0){
 			String sql = "update "+tablename+" set "+" H"+String.valueOf(today_hour)+"="+Double.valueOf(resultValue)+ " where RiQi="+"'"+datatime+"'"+ " and BuJianLeiXingID="+calc.getDeviceType()+" and BuJianID="+calc.getDeviceID()+" and BuJianCanShuID="+calc.getDeviceParam()+" and ChangZhanID="+calc.getChangZhanID();
@@ -639,16 +619,21 @@ public class CCalThread{
 		}
 	}
 	/**
+	 * 把对基础表（basedata）操作的语句放入stmt中
 	 * Author 史善力
 	 * date 2020年12月23日08:25:09
-	 * description：对基础表完成插入或者更新操作
+	 * @param tablename
+	 * @param datatime
+	 * @param resultValue
+	 * @param calc
+	 * @throws SQLException
 	 **/
-	public void addBasedataSqlBatch(String tablename,String datatime,int today_hour,Double resultValue,CalcConfig calc) throws SQLException {
+	public void addBasedataSqlBatch(String tablename,String datatime,Double resultValue,CalcConfig calc) throws SQLException {
 		if(queryData(tablename,datatime,calc)>0){
-			String sql = "update "+tablename+" set "+" H"+String.valueOf(today_hour)+"="+Double.valueOf(resultValue)+ " where RiQi="+"'"+datatime+"'"+ " and BuJianLeiXingID="+calc.getDeviceType()+" and BuJianID="+calc.getDeviceID()+" and BuJianCanShuID="+calc.getDeviceParam()+" and ChangZhanID="+calc.getChangZhanID();
+			String sql = "update "+tablename+" set value="+Double.valueOf(resultValue)+ " where RiQi="+"'"+datatime+"'"+ " and BuJianLeiXingID="+calc.getDeviceType()+" and BuJianID="+calc.getDeviceID()+" and BuJianCanShuID="+calc.getDeviceParam()+" and ChangZhanID="+calc.getChangZhanID();
 			stmt.addBatch(sql);
 		}else{
-			String sql = "insert DELAYED into "+tablename+" (RiQi, BuJianLeiXingID, BuJianID, BuJianCanShuID, ChangZhanID,"+" H"+String.valueOf(today_hour)+") values("+"'"+datatime+"'"+","+calc.getDeviceType()+","+calc.getDeviceID()+","+calc.getDeviceParam()+","+calc.getChangZhanID()+","+Double.valueOf(resultValue)+")";
+			String sql = "insert DELAYED into "+tablename+" (RiQi, BuJianLeiXingID, BuJianID, BuJianCanShuID, ChangZhanID, value, valueFlag) values("+"'"+datatime+"'"+","+calc.getDeviceType()+","+calc.getDeviceID()+","+calc.getDeviceParam()+","+calc.getChangZhanID()+","+Double.valueOf(resultValue)+","+0+")";
 			stmt.addBatch(sql);
 		}
 	}

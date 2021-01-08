@@ -54,8 +54,9 @@ public class DataAdressService {
             flag = "1";
         }
         result.setActrualValue(flag);
-        if (flag.endsWith("1"))
+        if (flag.endsWith("1")) {
             result.setMessage(msg);
+        }
         return result;
     }
 

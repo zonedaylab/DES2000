@@ -187,11 +187,10 @@ public class DataDao {
   	    	    	+ " and a.BuJianCanShuID = "+buJianCanshu + " ");
   		    sb.append(" and a.riqi = '" + year + "-"+month+"-"+day+" 00:"+fen+"'  and 1=1  ");
   	    }
-	    //System.out.println(sb.toString());
- 
 	    try{
 		    result = jdbcTemplate_ccmservicems.query(sb.toString(), new ResultSetExtractor<List<HisDataTimeAndValue>>() {
-		    public List<HisDataTimeAndValue> extractData(ResultSet rs)  throws SQLException, DataAccessException {
+		    @Override
+			public List<HisDataTimeAndValue> extractData(ResultSet rs)  throws SQLException, DataAccessException {
 				 List<HisDataTimeAndValue> result = new ArrayList<HisDataTimeAndValue>();  
 				 while(rs.next()) {
 					HisDataTimeAndValue row = new HisDataTimeAndValue(); 

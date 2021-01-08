@@ -12,6 +12,11 @@ import cn.zup.iot.common.constant.PropertiesConstants;
 import cn.zup.iot.common.model.Timer;
 import cn.zup.iot.common.utils.ExecutionEnvUtil;
 
+/**
+ * 基于flink的消费5分钟计算信号,进行计算
+ * @author shishanli
+ * @date 2021年1月3日22:45:07
+ */
 public class FlinkKafkaTimercalc {
 
     public static void main(String[] args) throws Exception {

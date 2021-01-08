@@ -879,10 +879,11 @@ public class HisDataDao{
 		int ist_minute =  calendar.get(Calendar.MINUTE);
 		ist_minute -= ist_minute%5;
 		String sst_minute = "";
-		if(ist_minute<10)
+		if(ist_minute<10) {
 			sst_minute = "0"+ist_minute;
-		else
+		} else {
 			sst_minute = ""+ist_minute;
+		}
 		String tableName = "kwhdata" + startDate.getYear() + todayMonth;
 		List<HisDataTimeAndValue> result  = new ArrayList<HisDataTimeAndValue>();
 		try{

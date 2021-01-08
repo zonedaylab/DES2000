@@ -1,0 +1,7 @@
+/flink-kafka-event-to-basedata/target/
+/flink-kafka-event-to-cleandata/target/
+/flink-kafka-event-to-timercalc/target/
+/flink-kafka-event-to-timerdbsave/target/
+/flink-kafka-event-to-timerdecision/target/
+/flink-kafka-event-to-timerproducer/target/
+/flink-kafka-event-to-timerRedis/target/

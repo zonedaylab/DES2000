@@ -20,6 +20,11 @@ import java.util.Properties;
 
 import static cn.zup.iot.common.utils.KafkaConfigUtil.buildKafkaProps;
 
+/**
+ * 基于flink将kafka消息存到redis中
+ * @Author 史善力
+ * @date 2020年12月23日19:10:20
+ */
 public class FlinkKafkaToRedis {
 
     public static void main(String[] args) throws Exception {
@@ -29,18 +34,17 @@ public class FlinkKafkaToRedis {
         StreamExecutionEnvironment env = ExecutionEnvUtil.prepare(parameterTool);
         env.setParallelism(1);
         env.setStreamTimeCharacteristic(TimeCharacteristic.ProcessingTime);
-        //当checkpoint机制开启的时候，KafkaConsumer会定期把kafka的offset信息还有其他operator的状态信息一块保存起来。当job失败重启的时候，Flink会从最近一次的checkpoint中进行恢复数据，重新消费kafka中的数据。
         env.enableCheckpointing(5000);
         Properties props = buildKafkaProps(parameterTool);
         props.put("group.id", "flink kafka To redis");
 
         SingleOutputStreamOperator<DataEvent> dataStreamSource = env.addSource(new FlinkKafkaConsumer011<>(
-                props.getProperty(PropertiesConstants.KAFKA_TOPIC_ID),   //这个 kafka topic_id取的是application.properties
+                props.getProperty(PropertiesConstants.KAFKA_TOPIC_ID),
                 new SimpleStringSchema(),
                 props)).setParallelism(1)
-                .map(string -> JSON.parseObject(string, DataEvent.class)); //Fastjson 解析字符串成 DataEvent 对象
+                ////Fastjson 解析字符串成 DataEvent 对象
+                .map(string -> JSON.parseObject(string, DataEvent.class));
         dataStreamSource.print();
-        //单节点 Redis
         Properties properties = new Properties();
         ClassLoader classLoader = FlinkKafkaToRedis.class.getClassLoader();
         InputStream resourceAsStream = classLoader.getResourceAsStream("application.properties");
@@ -49,8 +53,9 @@ public class FlinkKafkaToRedis {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        FlinkJedisPoolConfig conf = new FlinkJedisPoolConfig.Builder().setHost(properties.getProperty("redis.host")).setPort(Integer.parseInt(properties.getProperty("redis.port")))/**.setPassword(PropertiesConstants.REDIS_PASSWD)*/.build();
+        FlinkJedisPoolConfig conf = new FlinkJedisPoolConfig.Builder().setHost(properties.getProperty("redis.host")).setPort(Integer.parseInt(properties.getProperty("redis.port"))).setPassword(properties.getProperty("redis.passwd")).build();
         dataStreamSource.print();
+        //sink到redis中
         dataStreamSource.addSink(new RedisSink<DataEvent>(conf, new RedisSinkMapper()));
         env.execute("flink kafka To Redis");
 

@@ -358,12 +358,15 @@ public class DecisionDao {
 	}
 
 	/**
-	 * 查询commdev表设备，根据厂站id或者设备id获取。
+	 * 人、逆变器、空调:部件类型
+	 * 人 1、人2：部件id
+	 * 查询commdev表，根据厂站id或者设备id、设备类型、部件类型获取
 	 *
+	 * @param deviceId 设备id或厂站id
 	 * @param deviceType 6设备层 / 5厂站层
 	 *                   deviceType若为5，则deviceId为厂站id
-	 * @param bujianType
-	 * @return
+	 * @param bujianType 部件类型
+	 * @return List<DeviceInfo>
 	 */
 	public List<DeviceInfo> getDeviceInfo(Integer deviceId, Integer deviceType, Integer bujianType) {
 		List<DeviceInfo> result = new ArrayList<DeviceInfo>();
@@ -384,6 +387,7 @@ public class DecisionDao {
 				sb.append(" and A.bjlxid = " + bujianType);
 			}
 			result = jdbcTemplateDeci.query(sb.toString(), new ResultSetExtractor<List<DeviceInfo>>() {
+				@Override
 				public List<DeviceInfo> extractData(ResultSet rs) throws SQLException, DataAccessException {
 					List<DeviceInfo> result = new ArrayList<DeviceInfo>();
 					while (rs.next()) {
@@ -424,13 +428,16 @@ public class DecisionDao {
 		//定义日期 如果传的日期参数为null则获取当前时间，不为null则设置传的日期参数
 		Calendar date = new GregorianCalendar(TimeZone.getTimeZone("GMT+8"));
 		date.setTimeInMillis(Calendar.getInstance().getTimeInMillis());
-		if (dateParam != null)
+		if (dateParam != null) {
 			date.setTime(dateParam);
+		}
 
 		int date_year = date.get(Calendar.YEAR);
 		int date_month = date.get(Calendar.MONTH) + 1;
-//		int date_day = date.get(Calendar.DAY_OF_MONTH);
-		int date_day = 4;
+//		int date_year = 2020;
+//		int date_month = 12;
+		int date_day = date.get(Calendar.DAY_OF_MONTH);
+//		int date_day = 4;
 		int date_hour = date.get(Calendar.HOUR_OF_DAY);
 		int date_minute = date.get(Calendar.MINUTE);
 
@@ -444,8 +451,9 @@ public class DecisionDao {
 		}
 //	    if(date_hour>15)
 //	    	date_hour = 15;
-		if (date_month < 10)
+		if (date_month < 10) {
 			month = "0" + month;
+		}
 		String tableName = "ycdata" + year + month;
 
 		List<YCInfoData> result = new ArrayList<YCInfoData>();
@@ -470,6 +478,7 @@ public class DecisionDao {
 				sb.append(" and b.DYBJParam in (4,6,8,10,12,14,212,214) ");
 //		    System.out.println(sb.toString()+";");
 			result = jdbcTemplateDeci.query(sb.toString(), new ResultSetExtractor<List<YCInfoData>>() {
+				@Override
 				public List<YCInfoData> extractData(ResultSet rs) throws SQLException, DataAccessException {
 					List<YCInfoData> result = new ArrayList<YCInfoData>();
 					while (rs.next()) {
@@ -884,15 +893,16 @@ public class DecisionDao {
 	}
 
 	/**
-	 * 源深系统测验
-	 * 2020年12月9日18:55:30
-	 *
+	 * 对源深系统的设备信息进行测试
 	 * @Author 史善力
+	 * @date 2020年12月9日18:55:30
+	 * @return  List<DeviceInfo>
 	 */
 	public List<DeviceInfo> getYuanshenTest() {
 		String sqlStr = "select A.ChangZhanID AS deviceId,A.StationName AS deviceName from stationinfo A where StationLat<=31.8795 ";
 		List<DeviceInfo> result = new ArrayList<DeviceInfo>();
 		result = jdbcTemplateDeci.query(sqlStr.toString(), new ResultSetExtractor<List<DeviceInfo>>() {
+			@Override
 			public List<DeviceInfo> extractData(ResultSet rs) throws SQLException, DataAccessException {
 				List<DeviceInfo> result = new ArrayList<DeviceInfo>();
 				while (rs.next()) {
@@ -906,5 +916,4 @@ public class DecisionDao {
 		});
 		return result;
 	}
-
 }
